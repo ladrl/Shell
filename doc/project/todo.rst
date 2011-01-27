@@ -1,19 +1,6 @@
 ==============
- Ideen shell
+ ToDo list
 ==============
-
-
-Nicht immer schnell sondern nie langsam.
-
-Der User hat das kommando: reaktion sofort, auch wenn nicht alles geladen.
-
-Visuelle indikation von Tastaturkommands
-
-Plugins müssen deklarieren, welche intents sie akzeptieren und welche sie generieren.
-
-
-ToDo
-----
 
 Eröffnen von seiten mit den design themen:
 
