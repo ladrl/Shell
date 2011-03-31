@@ -13,7 +13,7 @@ import java.io.File
 object Batik extends SimpleSwingApplication with Logged with ConsoleLogger {
   def top = new MainFrame {
     title = "Batik Shell Prototype"
-    contents = new BoxPanel(Orientation Vertical) {
+    contents = new BoxPanel(Orientation Vertical) { mainPanel =>
       val canvas = new SVGCanvas
       contents += canvas
       contents += new Button { me =>
@@ -36,9 +36,16 @@ object Batik extends SimpleSwingApplication with Logged with ConsoleLogger {
       listenTo(canvas.document)
       listenTo(canvas.gvtTree)
       reactions += {
-        case SVGCanvas.DocumentLoading(src, state, doc) => log("Loading document %s from %s" format (state, doc.map { _.getURL }))
-        case SVGCanvas.GVTBuild(src, state) => log("GVT build: %s" format (state))
+        case SVGCanvas.DocumentLoading(src, state, doc) => log("Loading document %s from %s" format (state, doc.map { _.getURL })) 
+        case SVGCanvas.GVTBuild(src, state) => {
+          log("GVT build: %s" format (state))
+          state match {
+            case State.Completed => mainPanel.listenTo(canvas.js)
+            case _ =>
+          }
+        }
         case SVGCanvas.GVTRender(src, state) => log("GVT render: %s" format (state))
+        case SVGCanvas.JSEvent(src, t) => log("JSEvent(%s)" format t)
       }
     }
   }

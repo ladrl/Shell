@@ -33,15 +33,39 @@ object SVGCanvas {
   abstract class CanvasEvent {
     def state: State.Value
   }
+  case class JSEvent(val source: Component, what: String) extends Event
   case class DocumentLoading(val source: Component, val state: State.Value, val doc: Option[SVGDocument]) extends CanvasEvent with ComponentEvent
   case class GVTBuild(val source: Component, val state: State.Value) extends CanvasEvent with ComponentEvent
   case class GVTRender(val source: Component, val state: State.Value) extends CanvasEvent with ComponentEvent
   case class Manager(val source: Component, val state: State.Value) extends CanvasEvent with ComponentEvent
+  private val publishers = new scala.collection.mutable.HashMap[String, Publisher]
+  def createPublisher(name: String, comp: Component): Publisher = {
+    val p = new Publisher {
+      def fromString(evt: String): Unit = publish(JSEvent(comp, evt))
+    }
+    publishers(name) = p
+    p
+  }
+  def getPublisher(name: String): Publisher = publishers(name)
 }
 
 class SVGCanvas extends Component with Container.Wrapper { me =>
   import SVGCanvas._
-  override lazy val peer = new JSVGCanvas
+  import org.mozilla.javascript.{
+    Scriptable,
+    ScriptableObject,
+    FunctionObject
+  }
+  override lazy val peer = new JSVGCanvas {
+    lazy val interpreter = bridgeContext.getInterpreter("application/ecmascript")
+    def registerObject(name: String, ob: Any) : Unit = {
+      interpreter.bindObject(name, null)
+      println("Register object '%s'" format name)
+    }
+  }
+  
+  lazy val js = createPublisher("canvas", me)
+  
   lazy val document = new Publisher {
     peer.addSVGDocumentLoaderListener(new SVGDocumentLoaderAdapter() {
       override def documentLoadingStarted(e: SVGDocumentLoaderEvent) { publish(SVGCanvas.DocumentLoading(me, State.Started, Option(e.getSVGDocument))) }

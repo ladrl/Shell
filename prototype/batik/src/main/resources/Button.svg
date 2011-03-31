@@ -2,9 +2,15 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 <svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" version="1.1" width="27mm" height="6mm" id="svg2">
 	<defs id="defs4">
-			
+    <script type="text/ecmascript">
+      importPackage(Packages.me.scalatoys.shell.Swing)
+      var publisher = SVGCanvas.getPublisher("canvas")
+      function sendEvent(name) {
+        publisher.fromString(name)
+      }
+    </script>
 	</defs>
-	<g id="Button" class="Control">
+	<g id="Button" class="Control" onclick="sendEvent('test')" onmouseover="sendEvent('mouse ' + evt.clientX)">
 			<rect width="25mm" height="5mm" id="Border" class="Control Border" rx="0.5mm" ry="0.5mm" style="fill: none; stroke: black;"/>
 			<text>
 				<tspan id="Label" x="4mm" y="4mm">Text</tspan>

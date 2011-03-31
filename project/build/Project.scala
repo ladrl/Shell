@@ -9,9 +9,13 @@ class Project(info: ProjectInfo) extends ParentProject(info) {
         }
         val batik = project("batik", "batik-prototype", new Batik(_))
         class Batik(info: ProjectInfo) extends DefaultProject(info) {
-            override def fork = forkRun
+            override def compileOptions = CompileOption("-g:source") :: Nil
+            override def fork = forkRun("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000" :: Nil)
             val scalaSwing = "org.scala-lang" % "scala-swing" % "2.8.1"
-            val batik = "org.apache.xmlgraphics" % "batik-swing" % "1.7"
+            
+            val batikVersion = "1.7"
+            val batik = "org.apache.xmlgraphics" % "batik-swing" % batikVersion
+            val js = "org.apache.xmlgraphics" % "batik-script" % batikVersion
         }
     }
 }
