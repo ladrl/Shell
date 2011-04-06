@@ -10,10 +10,10 @@
       }
     </script>
 	</defs>
-	<g id="Button" class="Control" onclick="sendEvent('test')" onmouseover="sendEvent('mouse ' + evt.clientX)">
+	<g id="Button" class="Control" onclick="sendEvent('test')" onkeydown="sendEvent('Key ' + evt)">
 			<rect width="25mm" height="5mm" id="Border" class="Control Border" rx="0.5mm" ry="0.5mm" style="fill: none; stroke: black;"/>
-			<text>
-				<tspan id="Label" x="4mm" y="4mm">Text</tspan>
+			<text id="Button.Label">
+				<tspan id="Button.Label.Text" x="4mm" y="4mm">Text</tspan>
 			</text>
 	</g>
 </svg>

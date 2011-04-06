@@ -16,23 +16,7 @@ object Batik extends SimpleSwingApplication with Logged with ConsoleLogger {
     contents = new BoxPanel(Orientation Vertical) { mainPanel =>
       val canvas = new SVGCanvas
       contents += canvas
-      contents += new Button { me =>
-        text = "Load"
-        reactions += {
-          case ButtonClicked(src) if(src == me) => {
-            val chooser = new FileChooser(new File("./prototype/batik/src/main/resources")) {
-              multiSelectionEnabled = false
-            }
-            chooser.showOpenDialog(me) match {
-              case FileChooser.Result.Approve => {
-                val f = chooser.selectedFile
-                canvas.peer.setURI(f.toURL.toString)
-              }
-              case _ =>
-            }
-          }
-        }
-      }
+
       listenTo(canvas.document)
       listenTo(canvas.gvtTree)
       reactions += {
@@ -40,13 +24,22 @@ object Batik extends SimpleSwingApplication with Logged with ConsoleLogger {
         case SVGCanvas.GVTBuild(src, state) => {
           log("GVT build: %s" format (state))
           state match {
-            case State.Completed => mainPanel.listenTo(canvas.js)
+            case State.Completed => {
+              mainPanel.listenTo(canvas.js)
+            }
             case _ =>
           }
         }
         case SVGCanvas.GVTRender(src, state) => log("GVT render: %s" format (state))
-        case SVGCanvas.JSEvent(src, t) => log("JSEvent(%s)" format t)
+        case SVGCanvas.JSEvent(src, t) => {
+          log("JSEvent(%s)" format t)
+          
+          canvas.get("Button.Label.Text").map { x => 
+            x.setTextContent("aiueuia")
+          }
+        }
       }
+      canvas.peer.setURI((new File("./prototype/batik/src/main/resources/Simple.svg")).toURL.toString)
     }
   }
 }

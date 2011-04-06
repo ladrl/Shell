@@ -64,6 +64,8 @@ class SVGCanvas extends Component with Container.Wrapper { me =>
     }
   }
   
+  def get(name: String) = Option(peer.getSVGDocument.getElementById(name))
+  
   lazy val js = createPublisher("canvas", me)
   
   lazy val document = new Publisher {

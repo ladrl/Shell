@@ -9,6 +9,8 @@ class Project(info: ProjectInfo) extends ParentProject(info) {
         }
         val batik = project("batik", "batik-prototype", new Batik(_))
         class Batik(info: ProjectInfo) extends DefaultProject(info) {
+            val scalaToolsSnapshots = ScalaToolsSnapshots
+            val scalatest = "org.scalatest" % "scalatest" % "1.3"
             override def compileOptions = CompileOption("-g:source") :: Nil
             override def fork = forkRun("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000" :: Nil)
             val scalaSwing = "org.scala-lang" % "scala-swing" % "2.8.1"
