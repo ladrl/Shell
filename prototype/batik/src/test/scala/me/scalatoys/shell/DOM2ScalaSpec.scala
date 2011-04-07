@@ -42,8 +42,13 @@ class DOM2ScalaSpec extends FlatSpec with MustMatchers {
   it must "be accessible as child when added to a document" in {
     val doc = builder.newDocument
     val sDoc:DOMDocument = DOMNode(doc)
-    val e = sDoc.createElement("test")
+    val root = sDoc.createElement("root")
+    val elements = (0 to 10).map{ i => sDoc.createElement("test" + i) }
+    root.children = elements
+    root.children must be (elements)
     
+    root.children = elements.filter{ e => elements.indexOf(e) % 2 == 0 }
+    root.children must be (elements.filter{ e => elements.indexOf(e) % 2 == 0 })
   }
   
   "An element node with NS" must "be acessible by Node" in {

@@ -10,6 +10,7 @@ package xml {
   
   trait Node {
     def children: Seq[Node]
+    def children_=(update: Seq[Node]): Unit
 //    def attributes: Map[String, Node]
     def parentNode: Option[Node]
     def owner: Option[Document]
@@ -23,7 +24,7 @@ package xml {
   }
   
   trait Document extends Node {
-    def createElement(name: String, namespace: Option[URI])
+    def createElement(name: String, namespace: Option[URI]): Node
   }
   
   package dom {
@@ -41,14 +42,16 @@ package xml {
     case class DOMText(override val peer: w3c.Text)                                   extends DOMNode(peer, w3c.Node.TEXT_NODE)
     case class DOMDocument(override val peer: w3c.Document)                           extends DOMNode(peer, w3c.Node.DOCUMENT_NODE) with Document {
       override def createElement(name: String, namespace: Option[URI] = None) = {
-        if(namespace.isDefined)
-          peer.createElementNS(name, namespace.get.toString)
-        else
-          peer.createElement(name)
+        DOMNode(if(namespace.isDefined)
+                  peer.createElementNS(name, namespace.get.toString)
+                else
+                  peer.createElement(name)
+                )
       }
     }
     
     object DOMNode {
+      def unapply(node: DOMNode) = Option(node.peer)
       def apply(peer: w3c.Document): DOMDocument = {
         (peer.getNodeType, peer) match {
           case (w3c.Node.DOCUMENT_NODE, peer: w3c.Document)                            => DOMDocument(peer)
@@ -73,14 +76,21 @@ package xml {
     
     abstract class DOMNode(val peer: w3c.Node, override val `type`: Short) extends Node {
       override def children: Seq[Node] = {
-        if(peer.hasChildNodes) {
+        if(peer.hasChildNodes)
           new IndexedSeq[DOMNode] {
             override def length: Int = peer.getChildNodes.getLength
             override def apply(idx: Int): DOMNode = DOMNode(peer.getChildNodes.item(idx))
           }
-        }
         else
           Nil
+      }
+      
+      override def children_=(update: Seq[Node]): Unit = {
+        val childs = children
+        for(DOMNode(c) <- childs)
+          peer.removeChild(c)
+        for(DOMNode(u) <- update)
+          peer.appendChild(u)
       }
 //      def attributes: Map[String, DOMNode] = new Map[String, DOMNode] {
 //      }
