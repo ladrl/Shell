@@ -12,14 +12,14 @@ class DOM2ScalaSpec extends FlatSpec with MustMatchers {
     DocumentBuilder,
     DocumentBuilderFactory
   }
+  import org.w3c.dom.{
+      Node,
+      Document
+  }
   val builder = DocumentBuilderFactory.newInstance.newDocumentBuilder
   
   //****************************************************
   "A document node" must "be accessible by Node" in {
-    import org.w3c.dom.{
-      Node,
-      Document
-    }
     val doc: Document = builder.newDocument
     
     val sDoc = DOMNode(doc)
@@ -39,12 +39,19 @@ class DOM2ScalaSpec extends FlatSpec with MustMatchers {
     sNode.prefix must be (None)
   }
   
+  it must "be accessible as child when added to a document" in {
+    val doc = builder.newDocument
+    val sDoc:DOMDocument = DOMNode(doc)
+    val e = sDoc.createElement("test")
+    
+  }
+  
   "An element node with NS" must "be acessible by Node" in {
     import org.w3c.dom.Node
     val doc = builder.newDocument
     val node: Node = doc.createElementNS("namespace", "test")
-    node.setPrefix("tst")
     val sNode = DOMNode(node)
+    sNode.prefix = Some("tst")
     sNode.namespace must be(Some(new java.net.URI("namespace")))
     sNode.prefix must be(Some("tst"))
     sNode.parentNode must be(None)
