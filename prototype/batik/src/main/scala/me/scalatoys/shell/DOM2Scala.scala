@@ -11,7 +11,9 @@ package xml {
   trait Node {
     def children: Seq[Node]
     def children_=(update: Seq[Node]): Unit
-//    def attributes: Map[String, Node]
+    def attributes: Map[(String, Option[URI]), Node]
+    def attributes_=(attrs: Map[(String, Option[URI]), Node]): Unit
+    
     def parentNode: Option[Node]
     def owner: Option[Document]
     
@@ -21,10 +23,12 @@ package xml {
     def prefix: Option[String]
     def prefix_=(newPrefix: Option[String]): Unit
     def namespace: Option[URI]
+    override def toString = ("Node %s (local: %s)"  format (name, localName)) + namespace.map { " in %s" format _ }.getOrElse("")
   }
   
   trait Document extends Node {
     def createElement(name: String, namespace: Option[URI]): Node
+    def createAttribute(name: String, namespace: Option[URI]): Node
   }
   
   package dom {
@@ -41,13 +45,14 @@ package xml {
     case class DOMProcessingInstruction(override val peer: w3c.ProcessingInstruction) extends DOMNode(peer, w3c.Node.PROCESSING_INSTRUCTION_NODE)
     case class DOMText(override val peer: w3c.Text)                                   extends DOMNode(peer, w3c.Node.TEXT_NODE)
     case class DOMDocument(override val peer: w3c.Document)                           extends DOMNode(peer, w3c.Node.DOCUMENT_NODE) with Document {
-      override def createElement(name: String, namespace: Option[URI] = None) = {
-        DOMNode(if(namespace.isDefined)
-                  peer.createElementNS(name, namespace.get.toString)
-                else
-                  peer.createElement(name)
-                )
-      }
+      override def createAttribute(name: String, ns: Option[URI] = None): Node = DOMNode(ns match {
+        case Some(ns) => peer.createAttributeNS(ns.toString, name)
+        case None =>     peer.createAttribute(name)
+      })
+      override def createElement(name: String, ns: Option[URI] = None): Node = DOMNode(ns match {
+        case Some(ns) => peer.createElementNS(ns.toString, name)
+        case None =>     peer.createElement(name)
+      })
     }
     
     object DOMNode {
@@ -92,8 +97,38 @@ package xml {
         for(DOMNode(u) <- update)
           peer.appendChild(u)
       }
-//      def attributes: Map[String, DOMNode] = new Map[String, DOMNode] {
-//      }
+      
+      override def attributes: Map[(String, Option[URI]), Node] = {
+        val attrMap = peer.getAttributes
+        val list = for(i <- 0 until attrMap.getLength) yield {
+          val node = attrMap.item(i)
+          ((node.getNodeName, Option(node.getNamespaceURI).map{ new URI(_) }), DOMNode(node))
+        }
+        Map(list:_*)
+      }
+      override def attributes_=(attrs: Map[(String, Option[URI]), Node]): Unit = {
+        val curAttrs = attributes
+        val newAttrs = curAttrs ++ attrs
+        val delAttrs = for((nameNs, node) <- curAttrs if(!newAttrs.contains(nameNs))) yield nameNs
+        val peerAttrs = peer.getAttributes
+        newAttrs.foreach { 
+          case ((name, None), node) => {
+            if(name != node.name) error("Parameter name doesn't match content of node: %s instead of %s" format (name, node.name))
+            val DOMNode(n) = node
+            peerAttrs.setNamedItem(n)
+          }
+          case ((name, Some(ns)), node) => {
+            if(name != node.localName || Some(ns) != node.namespace) error("Parameters name and namespace don't match content of node: %s in %s expected instead %s in %s found" format (node.localName, node.namespace, name, ns))
+            val DOMNode(n) = node
+            peerAttrs.setNamedItemNS(n)
+          }
+        }
+        delAttrs.foreach { 
+          case (name, None) => peerAttrs.removeNamedItem(name)
+          case (name, Some(ns)) => peerAttrs.removeNamedItemNS(ns.toString, name)
+        }
+      }
+      
       override def parentNode: Option[Node] = Option(peer.getParentNode).map { DOMNode(_) }
       override def owner: Option[Document] = Option(peer.getOwnerDocument).map { DOMNode(_) }
       override def name: String = peer.getNodeName
@@ -102,7 +137,5 @@ package xml {
       override def prefix_=(prefix: Option[String]): Unit = peer.setPrefix(prefix.getOrElse(null))
       override def namespace: Option[URI] = Option(peer.getNamespaceURI).map { new URI(_) }
     }
-    
-    
   }
 }
