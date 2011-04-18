@@ -1,0 +1,7 @@
+digraph AbstractEvent {
+  Event;
+  Intention;
+  Command;
+  Intention -> Event;
+  Intention -> Command;
+}

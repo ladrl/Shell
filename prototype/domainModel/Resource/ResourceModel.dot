@@ -1,0 +1,17 @@
+digraph {
+  node [
+    shape=box
+  ];
+
+  res [label="Resource"];
+  proc [label="Process"];
+  data [label="Data"];
+  doc [label="Document"];
+  stre [label="Stream"];
+  
+  doc -> data;
+  stre -> data;
+  proc -> res;
+  data -> res;
+  res -> res [label="MetaResource"];
+}

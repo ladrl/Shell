@@ -15,5 +15,6 @@ Which prototypes?
  # gui study
  # Intent and Workflow
  # Resource and Topology
+  - Domain Model for Resource
  # ...
 
