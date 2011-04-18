@@ -53,9 +53,7 @@ class DOM2ScalaSpec extends FlatSpec with MustMatchers {
   }
   
   "An element node" must "be accessible by Node" in {
-    import org.w3c.dom.Node
-    val doc = builder.newDocument
-    val node: Node = doc.createElement("test")
+    val node = doc.createElement("test")
     
     val sNode = DOMNode(node)
     sNode.`type` must be (Node.ELEMENT_NODE)
@@ -65,8 +63,6 @@ class DOM2ScalaSpec extends FlatSpec with MustMatchers {
   }
   
   it must "be accessible as child when added to a document" in {
-    val doc = builder.newDocument
-    val sDoc:DOMDocument = DOMNode(doc)
     val root = sDoc.createElement("root")
     val elements = (0 to 10).map{ i => sDoc.createElement("test" + i) }
     
@@ -78,8 +74,6 @@ class DOM2ScalaSpec extends FlatSpec with MustMatchers {
   }
   
   it must "allow access to its attributes" in {
-    val doc = builder.newDocument
-    val sDoc = DOMNode(doc)
     val root = sDoc.createElement("root")
     val attr = sDoc.createAttribute("test")
     val ns = new URI("namespace")
@@ -90,14 +84,24 @@ class DOM2ScalaSpec extends FlatSpec with MustMatchers {
   }
   
   "An element node with NS" must "be acessible by Node" in {
-    import org.w3c.dom.Node
-    val doc = builder.newDocument
-    val node: Node = doc.createElementNS("namespace", "test")
+    val node = doc.createElementNS("namespace", "test")
     val sNode = DOMNode(node)
     
     sNode.prefix = Some("tst")
     sNode.namespace must be(Some(new java.net.URI("namespace")))
     sNode.prefix must be(Some("tst"))
     sNode.parentNode must be(None)
+  }
+  
+  "A text node" must "allow content" in {
+    val node = sDoc.createText("InitialText")
+    node.value must be (Some("InitialText"))
+    node.value = "TestText"
+    node.value must be (Some("TestText"))
+    node.value = None
+    node.value must be (None)
+    val str: String = null
+    node.value = str
+    node.value must be (None)
   }
 }

@@ -13,6 +13,13 @@ package xml {
     def children_=(update: Seq[Node]): Unit
     def attributes: Map[(String, Option[URI]), Node]
     def attributes_=(attrs: Map[(String, Option[URI]), Node]): Unit
+    def attrsFromString(attrs: Map[String, String]): Unit = {
+      owner.map { doc =>
+        attributes = for((name, value) <- attrs) yield {
+          (name, namespace) -> doc.createAttribute(name, namespace)
+        }
+      }
+    }
     
     def parentNode: Option[Node]
     def owner: Option[Document]
@@ -23,19 +30,28 @@ package xml {
     def prefix: Option[String]
     def prefix_=(newPrefix: Option[String]): Unit
     def namespace: Option[URI]
+    def value: Option[String] = None
+    def value_=(newValue: Option[String]): Unit = {}
+    def value_=(newValue: String):Unit = this.value = Option(newValue)
     override def toString = ("Node %s (local: %s)"  format (name, localName)) + namespace.map { " in %s" format _ }.getOrElse("")
   }
   
-  trait Document extends Node {
-    def createElement(name: String, namespace: Option[URI]): Node
-    def createAttribute(name: String, namespace: Option[URI]): Node
+  trait Document { self: Node =>
+    def createElement(name: String, namespace: Option[URI] = None): Node
+    def createAttribute(name: String, namespace: Option[URI] = None): Node
+    def createText(value: String): Node
   }
   
   package dom {
     import org.w3c.{ dom => w3c }
     
+    trait TextNode { self: DOMNode =>
+      override def value: Option[String] = Option(peer.getNodeValue)
+      override def value_=(newValue: Option[String]): Unit = peer.setNodeValue(newValue.getOrElse(null))
+    }
+    
     case class DOMElement(override val peer: w3c.Element)                             extends DOMNode(peer, w3c.Node.ELEMENT_NODE)
-    case class DOMAttribute(override val peer: w3c.Attr)                              extends DOMNode(peer, w3c.Node.ATTRIBUTE_NODE)
+    case class DOMAttribute(override val peer: w3c.Attr)                              extends DOMNode(peer, w3c.Node.ATTRIBUTE_NODE) with TextNode
     case class DOMCDataSection(override val peer: w3c.CDATASection)                   extends DOMNode(peer, w3c.Node.CDATA_SECTION_NODE)
     case class DOMComment(override val peer: w3c.Comment)                             extends DOMNode(peer, w3c.Node.COMMENT_NODE) 
     case class DOMDocumentType(override val peer: w3c.DocumentType)                   extends DOMNode(peer, w3c.Node.DOCUMENT_TYPE_NODE)
@@ -43,7 +59,7 @@ package xml {
     case class DOMEntityReference(override val peer: w3c.EntityReference)             extends DOMNode(peer, w3c.Node.ENTITY_REFERENCE_NODE)
     case class DOMNotation(override val peer: w3c.Notation)                           extends DOMNode(peer, w3c.Node.NOTATION_NODE)
     case class DOMProcessingInstruction(override val peer: w3c.ProcessingInstruction) extends DOMNode(peer, w3c.Node.PROCESSING_INSTRUCTION_NODE)
-    case class DOMText(override val peer: w3c.Text)                                   extends DOMNode(peer, w3c.Node.TEXT_NODE)
+    case class DOMText(override val peer: w3c.Text)                                   extends DOMNode(peer, w3c.Node.TEXT_NODE) with TextNode
     case class DOMDocument(override val peer: w3c.Document)                           extends DOMNode(peer, w3c.Node.DOCUMENT_NODE) with Document {
       override def createAttribute(name: String, ns: Option[URI] = None): Node = DOMNode(ns match {
         case Some(ns) => peer.createAttributeNS(ns.toString, name)
@@ -53,6 +69,7 @@ package xml {
         case Some(ns) => peer.createElementNS(ns.toString, name)
         case None =>     peer.createElement(name)
       })
+      override def createText(value: String): Node = DOMNode(peer.createTextNode(value))
     }
     
     object DOMNode {

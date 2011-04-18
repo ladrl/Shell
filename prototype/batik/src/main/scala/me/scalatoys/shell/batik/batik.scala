@@ -9,8 +9,12 @@ import me.scalatoys.shell.Swing._
 import scala.swing._
 import scala.swing.event._
 import java.io.File
+import me.scalatoys.shell.xml._
+import me.scalatoys.shell.xml.dom._
 
 object Batik extends SimpleSwingApplication with Logged with ConsoleLogger {
+  val svgNs = Option(new java.net.URI("http://www.w3.org/2000/svg"))
+  var log: List[String] = Nil
   def top = new MainFrame {
     title = "Batik Shell Prototype"
     contents = new BoxPanel(Orientation Vertical) { mainPanel =>
@@ -34,8 +38,16 @@ object Batik extends SimpleSwingApplication with Logged with ConsoleLogger {
         case SVGCanvas.JSEvent(src, t) => {
           log("JSEvent(%s)" format t)
           
-          canvas.get("Button.Label.Text").map { x => 
-            x.setTextContent("aiueuia")
+          canvas.get("LogWindow.Text").map { x => 
+            val node = DOMNode(x)
+            log = log :+ t.toString
+            node.children = for((i, logEntry) <- (0 until log.length) zip log) yield {
+              val span = node.owner.get.createElement("tspan", svgNs)
+              span.children = List(node.owner.get.createText(logEntry))
+              span.attrsFromString(Map("y" -> ("%dmm" format (i * 5)), "x" -> "0mm"))
+              println(span.attributes)
+              span
+            }
           }
         }
       }
