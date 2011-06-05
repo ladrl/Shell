@@ -5,77 +5,92 @@ import org.scalatest.matchers.MustMatchers
 
 trait InteractionModel {
   
-  type Actor = scala.actors.Actor
-  
-  trait Flow[F <: Point, T <: Point, Dir <: Direction] {
-    type ValueType
-    val from: F
-    val to: T
-  }
-
-  object FromControl extends Direction {
-    type Fun[T] = T => Unit
-  }
-  object ToControl extends Direction {
-    type Fun[T] = () => T
+  trait Sink[-T, E[+_]] {
+    def accept(e: E[T])
   }
   
-  trait Event[-T] {
-    def fire(t: T): Unit
+  trait Source[-T, E[+_]] {
+    def sink: Sink[T, E]
   }
   
-  trait Signal[+T] {
-    def sample: T
-  }
-
-  trait ControlToReaction[T, Dir <: Direction] extends Flow[PointOfControl[T], PointOfReaction[T], Dir] {
-    type ValueType = T
-    val from: PointOfControl[T]
-    val to: PointOfReaction[T]
-    val fun: Dir#Fun[T]
-  }
+  case class Event[+T](val content:T)
   
-  case class ControlToReactionEvent[T](val from: POC[T], val to: POR[T] ) extends ControlToReaction[T, FromControl.type] with Event[T] {
-    override def fire(t: T): Unit = { to.fire(t) }
-    val fun : (T) => Unit = { t:T => fire(t)  }
+  trait EventSink[T] extends Sink[T, Event] {
+    def f(t: T): Unit
+    def accept(e: Event[T]): Unit = {
+      val Event(content:T) = e
+      f(content)
+    }
   }
   
-  case class ControlToReactionSignal[T](val from: POC[T], val to: POR[T] ) extends ControlToReaction[T, ToControl.type] with Signal[T] {
-    override def sample: T = error("aiea")
-    val fun : () => T = sample _
-  }
-
-  trait Point
-
-  trait PointOfControl[T] extends Actor with Point 
-  
-  type POC[T] = PointOfControl[T]
-
-  trait PointOfReaction[-T] extends Point with Event[T]
-  
-  object NoReaction extends PointOfReaction[Any] {
-    def fire(a: Any): Unit = ()
+  trait EventSource[T] extends Source[T, Event]{
+    def sink: EventSink[T]
   }
   
-  type POR[T] = PointOfReaction[T]
-
-  trait Direction {
-    type Fun[_]
+  trait EventTransformer[A, B] extends Sink[A, Event] with EventSource[B] {
+    def process(a: A) : B
+    def accept(e: Event[A]): Unit = {
+      val Event(content) = e
+      val result = process(content)
+      sink.accept(Event(result))
+    }
   }
 }
 
+
 class InteractionModelTest extends FlatSpec with MustMatchers with InteractionModel {
-  "A flow" must "connect two points" in {
-    val poc = new PointOfControl[Int] {
-      def act = {
+
+  
+
+  
+  abstract class A
+  case class AB(val b: Boolean) extends A
+  case class AS(val s: String) extends A
+  case class AI(val i: Int) extends A
+  
+  "An event sink" must "accept an event" in {
+    var v: Option[A] = None
+    val es = new EventSink[A] {
+      def f(t: A): Unit = v = Some(t)
+    }
+    es.accept(Event(AB(true)))
+    v must be (Some(AB(true)))
+  }
+  
+  "An event transformer" must "accept an event, transform it and refire it" in {
+    var v: Option[Int] = None
+    val es = new EventSink[Option[Int]] { override def f(t: Option[Int]) = v = t }
+    val et = new EventTransformer[A, Option[Int]] {
+      val sink = es
+      def process(a: A) : Option[Int] = a match {
+        case AB(bool) => Some(if(bool == true) 1 else 0)
+        case AI(int) => Some(int)
+        case AS(str) => {
+          try {
+            Some(Integer.parseInt(str))
+          } catch {
+            case _: NumberFormatException => None
+          }
+        }
       }
     }
-    val por = new PointOfReaction[Int] {
-      def fire(i: Int) = println(i)
-    }
-    val flow = ControlToReactionEvent[Int](poc, por)
-    flow.from must be (poc)
-    flow.to must be (por)
+    et.accept(Event(AB(true)))
+    v must be (Some(1))
     
+    et.accept(Event(AI(11999)))
+    v must be (Some(11999))
+    
+    et.accept(Event(AS("1234")))
+    v must be (Some(1234))
+    
+    et.accept(Event(AS("iuteniare")))
+    v must be (None)
+  }
+  
+  "A function" must "transform and refire an event" in {
+pending
+  }
+  "A buffer" must "be an event sink and a signal source" in {
+    pending
   }
 }
