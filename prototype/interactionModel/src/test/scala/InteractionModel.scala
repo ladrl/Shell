@@ -3,8 +3,10 @@ package me.scalatoys.shell.prototype.interactionModel
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.MustMatchers
 
-trait InteractionModel {
-  
+trait Scope 
+
+
+trait EventModel {
   trait Sink[-T, E[+_]] {
     def accept(e: E[T])
   }
@@ -37,12 +39,8 @@ trait InteractionModel {
   }
 }
 
+class EventModelTest extends FlatSpec with MustMatchers with EventModel {
 
-class InteractionModelTest extends FlatSpec with MustMatchers with InteractionModel {
-
-  
-
-  
   abstract class A
   case class AB(val b: Boolean) extends A
   case class AS(val s: String) extends A
@@ -92,5 +90,53 @@ pending
   }
   "A buffer" must "be an event sink and a signal source" in {
     pending
+  }
+}
+
+trait SignalModel {
+  trait Signal[+T] {
+    def sample: T
+  }
+  
+  trait Sink[+T, S[+_]] {
+    def source: S[T]
+  }
+  
+  trait SignalTransformer[+A, +B] extends Sink[A, Signal] with Signal[B] {
+    def source: Signal[A]
+    def process(s: this.type): B
+    def sample: B = process(this)
+  }
+}
+
+class SignalModelTest extends FlatSpec with MustMatchers with SignalModel {
+  "A signal" must "allow sampling" in {
+    var source: Option[String] = None
+    val s = new Signal[Option[String]] { override def sample = source }
+    
+    s.sample must be (None)
+    source = Some("string")
+    s.sample must be (Some("string"))
+    s.sample must be (Some("string"))
+    source = None
+    s.sample must be (None)
+    s.sample must be (None)
+  }
+  
+  "A signal transformer" must "be able to transform a signal while it's sampled" in {
+    var source: Option[String] = None
+    val s = new Signal[Option[String]] { override def sample = source }
+    
+    val f : SignalTransformer[Option[String], Option[Int]] => Option[Int] = _.source.sample.flatMap { str => try { Some(Integer.parseInt(str)) } catch { case _ => None }}
+    
+    val st = new SignalTransformer[Option[String], Option[Int]] {
+      def source = s
+      def process(s: this.type): Option[Int] = f (s)
+    }
+    st.sample must be (None)
+    source = Some("1233")
+    st.sample must be (Some(1233))
+    source = Some("3uietnuiae")
+    st.sample must be (None)
   }
 }
