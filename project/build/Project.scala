@@ -1,7 +1,12 @@
 import sbt._
 
-trait TestProject { self: DefaultProject  =>
+trait Tests { self: DefaultProject  =>
   val scalaTest = "org.scalatest" % "scalatest" % "1.3"
+}
+trait Scalaz { self: DefaultProject =>
+  val scalaToolsSnapshots = "Scala Tools Snapshots" at "http://scala-tools.org/repo-snapshots/"
+  val scalazCore = "org.scalaz" %% "scalaz-core" % "6.0-SNAPSHOT"
+  val scalazExample = "org.scalaz" %% "scalaz-example" % "6.0-SNAPSHOT"
 }
 
 class Project(info: ProjectInfo) extends ParentProject(info) {
@@ -19,6 +24,6 @@ class Project(info: ProjectInfo) extends ParentProject(info) {
         }
         
         val interactionModele = project("interactionModel", "interactionModel", new InteractionModel(_))
-        class InteractionModel(info: ProjectInfo) extends DefaultProject(info) with TestProject
+        class InteractionModel(info: ProjectInfo) extends DefaultProject(info) with Tests with Scalaz
     }
 }

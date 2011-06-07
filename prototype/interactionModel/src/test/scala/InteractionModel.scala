@@ -3,41 +3,6 @@ package me.scalatoys.shell.prototype.interactionModel
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.MustMatchers
 
-trait Scope 
-
-
-trait EventModel {
-  trait Sink[-T, E[+_]] {
-    def accept(e: E[T])
-  }
-  
-  trait Source[-T, E[+_]] {
-    def sink: Sink[T, E]
-  }
-  
-  case class Event[+T](val content:T)
-  
-  trait EventSink[T] extends Sink[T, Event] {
-    def f(t: T): Unit
-    def accept(e: Event[T]): Unit = {
-      val Event(content:T) = e
-      f(content)
-    }
-  }
-  
-  trait EventSource[T] extends Source[T, Event]{
-    def sink: EventSink[T]
-  }
-  
-  trait EventTransformer[A, B] extends Sink[A, Event] with EventSource[B] {
-    def process(a: A) : B
-    def accept(e: Event[A]): Unit = {
-      val Event(content) = e
-      val result = process(content)
-      sink.accept(Event(result))
-    }
-  }
-}
 
 class EventModelTest extends FlatSpec with MustMatchers with EventModel {
 
@@ -93,21 +58,6 @@ pending
   }
 }
 
-trait SignalModel {
-  trait Signal[+T] {
-    def sample: T
-  }
-  
-  trait Sink[+T, S[+_]] {
-    def source: S[T]
-  }
-  
-  trait SignalTransformer[+A, +B] extends Sink[A, Signal] with Signal[B] {
-    def source: Signal[A]
-    def process(s: this.type): B
-    def sample: B = process(this)
-  }
-}
 
 class SignalModelTest extends FlatSpec with MustMatchers with SignalModel {
   "A signal" must "allow sampling" in {
@@ -124,19 +74,24 @@ class SignalModelTest extends FlatSpec with MustMatchers with SignalModel {
   }
   
   "A signal transformer" must "be able to transform a signal while it's sampled" in {
-    var source: Option[String] = None
-    val s = new Signal[Option[String]] { override def sample = source }
+    var source: String = ""
+    val s = new Signal[String] { override def sample = source }
     
-    val f : SignalTransformer[Option[String], Option[Int]] => Option[Int] = _.source.sample.flatMap { str => try { Some(Integer.parseInt(str)) } catch { case _ => None }}
+    val f : SignalTransformer[String, String] => String = s => s.source.sample + s.source.sample
     
-    val st = new SignalTransformer[Option[String], Option[Int]] {
+    val st = new SignalTransformer[String, String] {
       def source = s
-      def process(s: this.type): Option[Int] = f (s)
+      def process(s: this.type): String = f (s)
     }
-    st.sample must be (None)
-    source = Some("1233")
-    st.sample must be (Some(1233))
-    source = Some("3uietnuiae")
-    st.sample must be (None)
+    
+    val stt = new SignalTransformer[String, String] {
+      def source = st
+      def process(s: this.type): String = f (s)
+    }
+    
+    st.sample must be ("")
+    source = "1233"
+    st.sample must be ("12331233")
+    stt.sample must be ("1233123312331233")
   }
 }
