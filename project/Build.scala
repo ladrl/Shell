@@ -41,17 +41,21 @@ object Prompt {
 }
 
 object Dependencies {
+  val scalatest	= "org.scalatest" % "scalatest_2.9.0" % "1.6.1" % "test"
   
-  val scalatest	= "org.scalatest" % "scalatest_2.9.0" % "1.4.1" % "test"
+  val test = Seq {
+    scalatest
+  }
 }
 
 object ShellBuild extends Build {
   import BuildSettings._
+  import Dependencies._
   
   lazy val resource = Project(
     "resource", 
     file("sub/resource"),
-    settings = Defaults.defaultSettings ++ buildSettings
+    settings = Defaults.defaultSettings ++ buildSettings ++ Seq(libraryDependencies := test)
   )
   lazy val interact = Project(
     "interact",
