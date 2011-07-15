@@ -28,6 +28,19 @@ class DimensionTest extends FlatSpec with MustMatchers {
     }
   }
 
+  def zip[Ia, Ib, Ic, IIa[_] <: Index[_], IIb[_] <: Index[_], A, B, C](
+    dim1: Dimension[A] with Readable with IndexReadable[Ia, IIa],
+    dim2: Dimension[B] with Readable with IndexReadable[Ib, IIb],
+    i: (Ic) => (IIa[Ia], IIb[Ib]), f: (A, B) => C) = {
+    new Dimension[C] with Readable with IndexReadable[Ic, Index] {
+      override val model = None
+      override def getAt(ic: Index[Ic]) = {
+        val (ia, ib) = i(ic.value)
+        f(dim1.getAt(ia), dim2.getAt(ib))
+      }
+    }
+  }
+
   "A readable, iterable dimension" must "behave like an iterable" in {
     val l = List[Int]()
     val dim = new ListDimension[Int](l)
@@ -96,20 +109,10 @@ class DimensionTest extends FlatSpec with MustMatchers {
     val dim1 = new MapDimension[Char, Int](m1)
     val dim2 = new MapDimension[Char, String](m2)
 
-    def zip[Ia, Ib, Ic, A, B, C](dim1: Dimension[A] with Readable with IndexReadable[Ia, Index], dim2: Dimension[B] with Readable with IndexReadable[Ib, Index], i: (Ic) => (Index[Ia], Index[Ib]), f: (A, B) => C) = {
-      new Dimension[C] with Readable with IndexReadable[Ic, Index] {
-        override val model = None
-        override def getAt(ic: Index[Ic]) = {
-          val (ia, ib) = i(ic.value)
-          f(dim1.getAt(ia), dim2.getAt(ib))
-        }
-      }
-    }
-
-    val composite = zip(dim1, dim2, { i: Char => (new Alphabet(i), new Alphabet(i)) }, { (_: Int).toString + (_:String) })
+    val composite = zip(dim1, dim2, { i: Char => (new Alphabet(i), new Alphabet(i)) }, { (_: Int).toString + (_: String) })
     val i = new Alphabet('a')
-    composite.getAt(i) must be (("0iaeiae"))
-    composite.getAt(i.next) must be (("1leile"))
+    composite.getAt(i) must be(("0iaeiae"))
+    composite.getAt(i.next) must be(("1leile"))
   }
 
   "A writable dimension" must "behave like an event sink" in {
