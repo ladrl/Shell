@@ -8,6 +8,15 @@ class ListDimension[T](val l: List[T]) extends Dimension[T] with Readable with I
   def iterator = l.toIterator
 }
 
+object Test {
+  def toInteger(str: String) = toInt(str.toList, Some(0))
+  def toInt(l: List[Char], value: Option[Int]): Option[Int] = l match {
+    case x :: Nil => value.map { _ * 10 + (x.toInt - '0'.toInt) }
+    case x :: xs => toInt(xs, value.map { _ * 10 + (x.toInt - '0'.toInt) })
+    case _ => None
+  }
+}
+
 class DimensionTest extends FlatSpec with MustMatchers {
   def transform[A, B](a: Dimension[A] with Readable with Iterable, f: A => B): Dimension[B] with Readable with Iterable = {
     new Dimension[B] with Readable with Iterable {
@@ -115,7 +124,7 @@ class DimensionTest extends FlatSpec with MustMatchers {
     composite.getAt(i.next) must be(("1leile"))
   }
 
-  "A writable dimension" must "behave like an event sink" in {
+  "A writable, buildable dimension" must "behave like an event sink" in {
     val l = scala.collection.mutable.ListBuffer[Int]()
     val dim = new Dimension[Int] with Writable with Growable {
       override val model = None
@@ -132,5 +141,64 @@ class DimensionTest extends FlatSpec with MustMatchers {
 
     dim.growable ++= List(0, 1, 2, 3)
     l must be(List(0, 1, 2, 3))
+  }
+
+  it must "be able to fork into multiple dimensions" in {
+    import scala.collection.mutable.{
+      ListBuffer
+    }
+    val l1 = ListBuffer[String]()
+    val l2 = ListBuffer[Option[Int]]()
+
+    val dim1 = new Dimension[String] with Writable with Growable {
+      override val model = None
+      val growable = new scala.collection.generic.Growable[String] {
+        override def +=(s: String) = {
+          l1 += s
+          this
+        }
+        override def clear = {
+          l1.clear
+        }
+      }
+    }
+    val dim2 = new Dimension[Option[Int]] with Writable with Growable {
+      override val model = None
+      val growable = new scala.collection.generic.Growable[Option[Int]] {
+        override def +=(o: Option[Int]) = {
+          l2 += o
+          this
+        }
+        override def clear = {
+          l1.clear
+        }
+      }
+    }
+
+    val f: (String) => (String, Option[Int]) =
+      s => {
+        val a = s.takeWhile(_ != ':')
+        val b = s.dropWhile(_ != ':').drop(1)
+        (a, Test.toInteger(b))
+      }
+    val dim = new Dimension[String] with Writable with Growable {
+      override val model = None
+      val growable = new scala.collection.generic.Growable[String] {
+        override def +=(s: String) = {
+          val (a, b) = f(s)
+          dim1.growable += a
+          dim2.growable += b
+          this
+        }
+        override def clear = {
+          dim1.growable.clear
+          dim2.growable.clear
+        }
+      }
+    }
+    
+    dim.growable ++= List("test:2", "noInt", ":12345")
+    l1.toList must be (List("test", "noInt", ""))
+    l2.toList must be (List(Some(2), None, Some(12345)))
   }
 }
