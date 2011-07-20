@@ -2,13 +2,15 @@ package me.home.tools.resource
 
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.MustMatchers
+import me.home.util.Converter._
+import scala.collection.mutable.HashMap
 
 class RODim[T](i: => Iterator[T]) extends Dimension[T] with Readable with Iterable {
   override val model = None
   def iterator = i
 }
 
-class WODim[T](g: => scala.collection.generic.Growable[T]) extends Dimension[T] with Writable with Growable {
+class WODim[T](g: => scala.collection.generic.Growable[T]) extends Dimension[T] with Writable with Appendable {
   override val model = None
   def growable = g
 }
@@ -98,7 +100,7 @@ class DimensionTest extends FlatSpec with MustMatchers {
     l must be(List(0, 1, 2, 3))
   }
 
-  it must "be able to fork into multiple dimensions" in {
+  it must "be able to map one into multiple dimensions" in {
     import scala.collection.mutable.{
       ListBuffer
     }
@@ -112,12 +114,41 @@ class DimensionTest extends FlatSpec with MustMatchers {
       s => {
         val a = s.takeWhile(_ != ':')
         val b = s.dropWhile(_ != ':').drop(1)
-        (a, Converter.toInteger(b))
+        (a, toInteger(b))
       }
     val dim = zip(dim1, dim2, f)
 
     dim.growable ++= List("test:2", "noInt", ":12345")
     l1.toList must be(List("test", "noInt", ""))
     l2.toList must be(List(Some(2), None, Some(12345)))
+  }
+  
+  class MapWritable[I, T](val m: collection.mutable.Map[I, T]) extends Dimension[T] with Writable with IndexWritable[I, Index] {
+    val model = None
+    override def setAt(i: Index[I], t: T) = m(i.value) = t
+  }
+  "A writable, indexable dimension" must "behave like a map" in {
+    val hm = new HashMap[String, Int]
+    val dim = new MapWritable(hm)
+    dim.setAt(Index("Test"), 100)
+    hm.get("Test") must be(Some(100))
+  }
+
+  it must "be able to map into multiple dimensions" in {
+	val hm1 = new HashMap[String, Option[Int]]
+	val hm2 = new HashMap[java.net.URI, String]
+	val dim1 = new MapWritable(hm1)
+	val dim2 = new MapWritable(hm2)
+	
+	val dim = zip(dim1, dim2,
+	    (v:String) => {
+	    	(Index(v.takeWhile{_ != '|'}), Index(new java.net.URI(v.dropWhile{_ != '|'}.drop(1))))
+	}, (c: String) => {
+	  (toInteger(c), c)
+	})
+	
+	dim.setAt(Index("Test|http://www.example.com"), "111")
+	hm1.get("Test") must be (Some(Some(111))) // get introduces another Option
+	hm2.get(new java.net.URI("http://www.example.com")) must be (Some("111"))
   }
 }

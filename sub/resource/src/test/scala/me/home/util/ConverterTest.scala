@@ -1,7 +1,7 @@
 package me.home.util
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.MustMatchers
-import me.hom.util.Converter._
+import me.home.util.Converter._
 
 class ConverterTest extends FlatSpec with MustMatchers {
   "toInteger" must "convert a 10-base int" in {
@@ -17,8 +17,8 @@ class ConverterTest extends FlatSpec with MustMatchers {
     toInteger("0111", 2) must be (Some(7))
   }
   it must "reject all digits exceeding the base" in {
-    pending
     toInteger("0123", 2) must be (None)
-    toInteger("01", 2) must be (Some(123))
+    toInteger("129a", 10) must be (None)
+    toInteger("129a", 16) must be (Some(0x129a))
   }
 }

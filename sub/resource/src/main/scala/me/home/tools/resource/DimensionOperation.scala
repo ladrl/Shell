@@ -1,4 +1,5 @@
 package me.home.tools.resource
+import scala.collection.generic.Growable
 
 object DimensionOperation {
   def transformRead[A, B](
@@ -11,11 +12,11 @@ object DimensionOperation {
   }
 
   def transformWrite[A, B](
-    dim: Dimension[B] with Writable with Growable,
-    f: A => B): Dimension[A] with Writable with Growable = {
-   new Dimension[A] with Writable with Growable {
+    dim: Dimension[B] with Writable with Appendable,
+    f: A => B): Dimension[A] with Writable with Appendable = {
+   new Dimension[A] with Writable with Appendable {
      override val model = None
-     override val growable = new scala.collection.generic.Growable[A] {
+     override val growable = new Growable[A] {
        override def +=(a: A) = {
          dim.growable += f(a)
          this
@@ -43,12 +44,12 @@ object DimensionOperation {
   }
 
   def zip[A, B, C](
-    dim1: Dimension[A] with Writable with Growable,
-    dim2: Dimension[B] with Writable with Growable,
+    dim1: Dimension[A] with Writable with Appendable,
+    dim2: Dimension[B] with Writable with Appendable,
     f: C => (A, B)) = {
-    new Dimension[C] with Writable with Growable {
+    new Dimension[C] with Writable with Appendable {
       override val model = None
-      override val growable = new scala.collection.generic.Growable[C] {
+      override val growable = new Growable[C] {
         override def +=(c: C) = {
           val (a, b) = f(c)
           dim1.growable += a
@@ -63,6 +64,22 @@ object DimensionOperation {
     }
   }
 
+  def zip[Ia, Ib, Ic, IIa[_] <: Index[_], IIb[_] <: Index[_], A, B, C](
+      dim1: Dimension[A] with Writable with IndexWritable[Ia, IIa],
+      dim2: Dimension[B] with Writable with IndexWritable[Ib, IIb],
+      i: Ic => (IIa[Ia], IIb[Ib]),
+      f: C => (A, B)) = {
+    new Dimension[C] with Writable with IndexWritable[Ic, Index] {
+      override val model = None
+      override def setAt(ic: Index[Ic], c: C) = {
+        val (ia, ib) = i(ic.value)
+        val (a, b) = f(c)
+        dim1.setAt(ia, a)
+        dim2.setAt(ib, b)
+      }
+    }
+  }
+  
   def zip[Ia, Ib, Ic, IIa[_] <: Index[_], IIb[_] <: Index[_], A, B, C](
     dim1: Dimension[A] with Readable with IndexReadable[Ia, IIa],
     dim2: Dimension[B] with Readable with IndexReadable[Ib, IIb],

@@ -1,8 +1,14 @@
 package me.home.tools.resource
+import scala.collection.generic.Growable
+
 
 // Index classes
 trait Index[T] { // T is the base type for the index
   def value: T
+}
+
+object Index {
+  def apply[T](t: T) = new Index[T] { val value = t }
 }
 
 trait Discrete[T] extends Index[T] {
@@ -45,8 +51,8 @@ trait IndexReadable[T, I[_] <: Index[_]] extends Indexed[T, I] { self: Dimension
 trait Writable { self: Dimension[_] => }
 
 // A growable dimension which can be written elemnt by element (requires writable)
-trait Growable { self: Dimension[_] with Writable =>
-  def growable: scala.collection.generic.Growable[self.DimensionType]
+trait Appendable { self: Dimension[_] with Writable =>
+  def growable: Growable[self.DimensionType]
 }
 
 // An indexable dimension which can be written with random access (requires writable)

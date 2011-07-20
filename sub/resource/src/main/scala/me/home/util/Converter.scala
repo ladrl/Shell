@@ -1,4 +1,4 @@
-package me.hom.util
+package me.home.util
 
 object Converter {
   import scala.annotation.tailrec
