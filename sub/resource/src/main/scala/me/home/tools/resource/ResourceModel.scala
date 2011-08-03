@@ -12,5 +12,5 @@ import scalaz._
 import Scalaz._
 
 trait ResourceModel {
-//  def create(resource: Resource) : Resource
+  def dimensionCount: Int
 }

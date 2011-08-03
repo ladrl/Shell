@@ -25,7 +25,7 @@ trait Continuous[T] extends Index[T] {
 
 // A dimension of elements of A
 trait Dimension[+A] {
-  def model: Option[DimensionModel] // Reference to the creating model
+  def model: DimensionModel // Reference to the creating model
   type DimensionType = A    // Stored parameter for self types
 }
 

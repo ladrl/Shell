@@ -4,16 +4,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.matchers.MustMatchers
 import me.home.util.Converter._
 import scala.collection.mutable.HashMap
-
-class RODim[T](i: => Iterator[T]) extends Dimension[T] with Readable with Iterable {
-  override val model = None
-  def iterator = i
-}
-
-class WODim[T](g: => scala.collection.generic.Growable[T]) extends Dimension[T] with Writable with Appendable {
-  override val model = None
-  def growable = g
-}
+import java.io.FileInputStream
 
 class DimensionTest extends FlatSpec with MustMatchers {
 
@@ -60,7 +51,7 @@ class DimensionTest extends FlatSpec with MustMatchers {
   }
 
   class MapDimension[K, T](val m: Map[K, T]) extends Dimension[T] with Readable with IndexReadable[K, Index] {
-    override val model = None
+    override val model = NoDimension
     override def getAt(i: Index[K]) = {
       m(i.value)
     }
@@ -124,7 +115,7 @@ class DimensionTest extends FlatSpec with MustMatchers {
   }
   
   class MapWritable[I, T](val m: collection.mutable.Map[I, T]) extends Dimension[T] with Writable with IndexWritable[I, Index] {
-    val model = None
+    val model = NoDimension
     override def setAt(i: Index[I], t: T) = m(i.value) = t
   }
   "A writable, indexable dimension" must "behave like a map" in {

@@ -73,3 +73,5 @@ trait IsIndexable { self: DimensionModel =>
   override val isIndexable = true
 }
 
+class SimpleDimension(val rank: Rank) extends DimensionModel
+object NoDimension extends SimpleDimension(NonExisting)

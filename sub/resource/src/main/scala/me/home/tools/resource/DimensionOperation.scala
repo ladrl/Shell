@@ -6,7 +6,7 @@ object DimensionOperation {
     a: Dimension[A] with Readable with Iterable,
     f: A => B): Dimension[B] with Readable with Iterable = {
     new Dimension[B] with Readable with Iterable {
-      override val model = None
+      override val model = NoDimension
       def iterator = a.iterator map f
     }
   }
@@ -15,7 +15,7 @@ object DimensionOperation {
     dim: Dimension[B] with Writable with Appendable,
     f: A => B): Dimension[A] with Writable with Appendable = {
    new Dimension[A] with Writable with Appendable {
-     override val model = None
+     override val model = NoDimension
      override val growable = new Growable[A] {
        override def +=(a: A) = {
          dim.growable += f(a)
@@ -33,7 +33,7 @@ object DimensionOperation {
     dim2: Dimension[B] with Readable with Iterable,
     f: (A, B) => C) = {
     new Dimension[C] with Iterable with Readable {
-      override val model = None
+      override val model = NoDimension
       override def iterator = new Iterator[C] {
         val iter1 = dim1.iterator
         val iter2 = dim2.iterator
@@ -48,7 +48,7 @@ object DimensionOperation {
     dim2: Dimension[B] with Writable with Appendable,
     f: C => (A, B)) = {
     new Dimension[C] with Writable with Appendable {
-      override val model = None
+      override val model = NoDimension
       override val growable = new Growable[C] {
         override def +=(c: C) = {
           val (a, b) = f(c)
@@ -70,7 +70,7 @@ object DimensionOperation {
       i: Ic => (IIa[Ia], IIb[Ib]),
       f: C => (A, B)) = {
     new Dimension[C] with Writable with IndexWritable[Ic, Index] {
-      override val model = None
+      override val model = NoDimension
       override def setAt(ic: Index[Ic], c: C) = {
         val (ia, ib) = i(ic.value)
         val (a, b) = f(c)
@@ -85,7 +85,7 @@ object DimensionOperation {
     dim2: Dimension[B] with Readable with IndexReadable[Ib, IIb],
     i: (Ic) => (IIa[Ia], IIb[Ib]), f: (A, B) => C) = {
     new Dimension[C] with Readable with IndexReadable[Ic, Index] {
-      override val model = None
+      override val model = NoDimension
       override def getAt(ic: Index[Ic]) = {
         val (ia, ib) = i(ic.value)
         f(dim1.getAt(ia), dim2.getAt(ib))
