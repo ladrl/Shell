@@ -1,12 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-          <name>resource</name>
-          <buildSpec>
-            <buildCommand>
-              <name>org.scala-ide.sdt.core.scalabuilder</name>
-            </buildCommand>
-          </buildSpec>
-          <natures>
-            <nature>org.scala-ide.sdt.core.scalanature</nature>
-            <nature>org.eclipse.jdt.core.javanature</nature>
-          </natures>
-        </projectDescription>
+	<name>resource</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.scala-ide.sdt.core.scalabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.scala-ide.sdt.core.scalanature</nature>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>Build.scala</name>
+			<type>1</type>
+			<location>/Users/lukasladrach/Documents/workspace/shell/project/Build.scala</location>
+		</link>
+	</linkedResources>
+</projectDescription>
