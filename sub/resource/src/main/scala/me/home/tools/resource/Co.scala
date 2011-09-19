@@ -1,25 +1,66 @@
 package me.home.tools.resource
 
-object Co {
-  /*
-   * The Co object traits need to create new elements from 
-   * existing ones, i.e. for comap
-   */
 
-  trait Indexable[-B] { self: Dimension[_] =>
+// Holds the promise that it will create an A (somehow)
+trait CanCreate[A] {
+  def create: A
+}
+
+// Holds the promise that it will create an object which creates an M[B], from an A
+// (The simple case of CanCreateFrom[A, B] can be reduced to Function1[A, B])
+trait CanCreateFrom[M[_], A, B] {
+  def from(a: A) : CanCreate[M[B]]
+}
+
+trait MetaData {
+}
+
+object Co {
+  
+  trait Rank
+  
+  trait Finite extends Rank {
+    def size: Int
+  }
+  
+  trait Defined extends Rank {
+  	def hasNext: Boolean
+  }
+  
+  trait Determined extends Rank {
+  	def isValid(i: Int): Boolean
+  }
+  
+  object Indexable {
+    trait Self { type λ[E, R <: Rank] = Dimension[E] with R }  
+  }
+  
+  trait Indexable[-B] { self: Indexable.Self#λ[_,_] =>
     override type D[+_] = self.type with Indexable[B]
     def at(i: B): ELEM
   }
   
-  trait Iterable { self: Dimension[_] =>
+  // TODO: Use the same idea as the scala iterator? (=> an iterable can generate iterators for multi pass...)
+  object Iterable {
+    trait Self { type λ[E, R <: Rank] = Dimension[E] with R }
+  }
+  trait Iterable { self: Iterable.Self#λ[_, _] =>
     override type D[+_] = self.type with Iterable
     def next: ELEM
   }
 
-  trait Dimension[+A] { // A passive (called) collection with metadata
+  abstract class Dimension[+A] { // A co collection with metadata
     type D[+_] <: Dimension[_]
     type ELEM = A
-    def comap[A, C](f: A => C): D[C]
   }
-  trait Algorithm[-A, +B] // A passive (called) function with metadata
+  
+  // An algorithm takes dimension and creates a set of dimension from it
+  // To process more than one dimension, one needs to create a zipped dimension
+  // TODO: preserve the type of the dimension (it may add functionality)
+  trait Algorithm[A, +B, AA, BB] extends Function1[(Dimension[A] with AA, MetaData), (Dimension[B] with BB, MetaData)] {
+    def transformMeta(m: MetaData): MetaData
+    def transform(a: Dimension[A] with AA): Dimension[B] with BB
+    
+    override def apply(a: (Dimension[A] with AA, MetaData)): (Dimension[B] with BB, MetaData) = (transform(a._1), transformMeta(a._2))
+  }
 }

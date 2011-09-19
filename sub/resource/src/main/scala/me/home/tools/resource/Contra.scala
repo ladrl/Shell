@@ -1,6 +1,16 @@
 package me.home.tools.resource
 
 
+// Holds the promise that it will extract an object A from somewhere
+trait CanExtract[A] {
+  def extract: A
+}
+
+// Holds the promise that it will crate an object which extracts a B, from a M[A]
+trait CanExtractFrom[M[_], A, B] {
+  def from(a: M[A]): CanExtract[B]
+}
+
 
 object Contra {
   /*
