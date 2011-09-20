@@ -36,7 +36,7 @@ class CanCreateTest extends FlatSpec with MustMatchers {
 }
 
 class CoDimensionTest extends FlatSpec with MustMatchers {
-  class IndexableDimension(val f: Int => Int, s: => Int) extends Dimension[Int] with Finite with Indexable[Int] {
+  class IndexableDimension(val f: Int => Int, s: => Int) extends Dimension[Int] with Defined with Indexable[Int] {
     override def at(i: Int) = f(i)
     override def size = s
   }
@@ -53,20 +53,18 @@ class CoDimensionTest extends FlatSpec with MustMatchers {
     
     val dim = new IndexableDimension(dataBlock(_), dataBlock.size)
     
-    dim.size must be (100);
-    
-    //{ dim.at(100) } produce[Exception]
+    dim.size must be (100)
   }
   
   "An iterable dimension" must "be built from a data block" in {
     val dataBlock = 0 to 1000 map { _ => (scala.math.random * 100).toInt }
     
     val dim = new Dimension[Int] with Iterable {
-      val iter = dataBlock.iterator
-      override def next = iter.next
+      override def iterator = dataBlock.iterator
     }
     
-    0 to 1001 map { _ => dim.next } must be (dataBlock)
+    val i = dim.iterator
+    0 to 1000 map { _ => i.next } must be (dataBlock)
   }
 }
 
@@ -74,10 +72,15 @@ class CoAlgorithmTest extends FlatSpec with MustMatchers {
   "A co algorithm" must "be a Function2 taking a dimension and returning a more specific dimension" in {
     val algo = new Algorithm[Int, Option[Int], Indexable[Int], Indexable[String]] {
       override def transform(a: Dimension[Int] with Indexable[Int]): Dimension[Option[Int]] with Indexable[String] = {
-        sys.error("not yet implemented")
+        new Dimension[Option[Int]] with Indexable[String] {
+          def at(s: String) = me.home.util.Converter.toInteger(s) map {
+            a.at(_)
+          }
+        }
       }
       override def transformMeta(m: MetaData): MetaData = {
-        sys.error("not yet implemented")
+        //sys.error("not yet implemented")
+        m
       }
     }
     
@@ -90,7 +93,7 @@ class CoAlgorithmTest extends FlatSpec with MustMatchers {
     val result = algo((dim, new MetaData {} ))._1
     
     0 to 1000 map { _.toString } map { result.at(_) } must be (dataBlock map { Some(_) })
-    
+    result.at("test") must be (None)
   }
 }
 

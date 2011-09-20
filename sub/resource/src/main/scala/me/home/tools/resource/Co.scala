@@ -17,24 +17,34 @@ trait MetaData {
 
 object Co {
   
-  trait Rank
-  
-  trait Finite extends Rank {
-    def size: Int
+  trait Rank { 
+    def hasLast: Boolean
   }
   
-  trait Defined extends Rank {
+  trait Infinite extends Rank {
+    def hasLast = false
+  }
+  
+  trait Finite extends Rank {
+    def hasLast = true
+  }
+  
+  trait Deterministic extends Finite {
   	def hasNext: Boolean
   }
   
-  trait Determined extends Rank {
-  	def isValid(i: Int): Boolean
+  trait Determined extends Finite {
+  	def isValid(offset: Int): Boolean
   }
+  
+  trait Defined extends Finite {
+    def size: Int
+  }
+  
   
   object Indexable {
     trait Self { type λ[E, R <: Rank] = Dimension[E] with R }  
   }
-  
   trait Indexable[-B] { self: Indexable.Self#λ[_,_] =>
     override type D[+_] = self.type with Indexable[B]
     def at(i: B): ELEM
@@ -42,11 +52,11 @@ object Co {
   
   // TODO: Use the same idea as the scala iterator? (=> an iterable can generate iterators for multi pass...)
   object Iterable {
-    trait Self { type λ[E, R <: Rank] = Dimension[E] with R }
+    trait Self { type λ[E, R <: Defined] = Dimension[E] with R }
   }
   trait Iterable { self: Iterable.Self#λ[_, _] =>
     override type D[+_] = self.type with Iterable
-    def next: ELEM
+    def iterator: Iterator[ELEM]
   }
 
   abstract class Dimension[+A] { // A co collection with metadata
