@@ -67,10 +67,29 @@ object Co {
   // An algorithm takes dimension and creates a set of dimension from it
   // To process more than one dimension, one needs to create a zipped dimension
   // TODO: preserve the type of the dimension (it may add functionality)
-  trait Algorithm[A, +B, AA, BB] extends Function1[(Dimension[A] with AA, MetaData), (Dimension[B] with BB, MetaData)] {
+  trait Algorithm1[A, +B, AA, BB] extends Function1[(Dimension[A] with AA, MetaData), (Dimension[B] with BB, MetaData)] {
     def transformMeta(m: MetaData): MetaData
     def transform(a: Dimension[A] with AA): Dimension[B] with BB
     
-    override def apply(a: (Dimension[A] with AA, MetaData)): (Dimension[B] with BB, MetaData) = (transform(a._1), transformMeta(a._2))
+    type _A = Dimension[A] with AA
+    type _B = Dimension[B] with BB
+    type __A = (_A, MetaData)
+    type __B = (_B, MetaData)
+    
+    override def apply(a: __A): __B = (transform(a._1), transformMeta(a._2))
+  }
+  
+  trait Algorithm2[A, B, +C, AA, BB, CC] extends Function2[(Dimension[A] with AA, MetaData), (Dimension[B] with BB, MetaData), (Dimension[C] with CC, MetaData)] {
+    def transformMeta(a: MetaData, b: MetaData): MetaData
+    def transform(a: Dimension[A] with AA, b: Dimension[B] with BB): Dimension[C] with CC
+    
+    type _A = Dimension[A] with AA
+    type _B = Dimension[B] with BB
+    type _C = Dimension[C] with CC
+    type __A = (_A, MetaData)
+    type __B = (_B, MetaData)
+    type __C = (_C, MetaData)
+    
+    override def apply(a: __A, b: __B): __C = (transform(a._1, b._1), transformMeta(a._2, b._2))
   }
 }

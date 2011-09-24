@@ -16,6 +16,8 @@ case class Out(val in: In)
 
 import Co._
 
+object NoMeta extends MetaData
+
 class CanCreateTest extends FlatSpec with MustMatchers {
   "A CanCreate" must "act like a constructor with no parameters" in {
     val cc = new CanCreate[Base] {
@@ -69,9 +71,9 @@ class CoDimensionTest extends FlatSpec with MustMatchers {
 }
 
 class CoAlgorithmTest extends FlatSpec with MustMatchers {
-  "A co algorithm" must "be a Function2 taking a dimension and returning a more specific dimension" in {
-    val algo = new Algorithm[Int, Option[Int], Indexable[Int], Indexable[String]] {
-      override def transform(a: Dimension[Int] with Indexable[Int]): Dimension[Option[Int]] with Indexable[String] = {
+  "A co algorithm1" must "be a Function2 taking a dimension and returning a more specific dimension" in {
+    val algo = new Algorithm1[Int, Option[Int], Indexable[Int], Indexable[String]] {
+      override def transform(a: _A): _B = {
         new Dimension[Option[Int]] with Indexable[String] {
           def at(s: String) = me.home.util.Converter.toInteger(s) map {
             a.at(_)
@@ -79,7 +81,6 @@ class CoAlgorithmTest extends FlatSpec with MustMatchers {
         }
       }
       override def transformMeta(m: MetaData): MetaData = {
-        //sys.error("not yet implemented")
         m
       }
     }
@@ -94,6 +95,37 @@ class CoAlgorithmTest extends FlatSpec with MustMatchers {
     
     0 to 1000 map { _.toString } map { result.at(_) } must be (dataBlock map { Some(_) })
     result.at("test") must be (None)
+  }
+  
+  import java.net.URL
+  
+  "A co algorithm2" must "be a Function3 taking two dimensions an returning a derived dimension" in {
+    val algo = new Algorithm2[String, Int, URL, Indexable[Int], Iterable, Indexable[Int]] {
+      override def transform(a: _A, b: _B): _C = new Dimension[URL] with Indexable[Int] {
+        val bIter = b.iterator
+        override def at(i: Int) = {
+          new URL(a.at(i) + bIter.next.toString)
+        }
+      }
+      override def transformMeta(a: MetaData, b: MetaData): MetaData = {
+        NoMeta
+      }
+    }
+    
+    val dataBlock = 0 to 100 map { _ => (scala.math.random * 100).toInt }
+    val urls = 0 to 100 map { _ => "http://google.com/search?q=" }
+        
+    val dim1 = new Dimension[String] with Indexable[Int] {
+      override def at(i: Int) = urls(i)
+    }
+        
+    val dim2 = new Dimension[Int] with Iterable {
+      override def iterator = dataBlock.iterator
+    }
+    
+    val result = algo((dim1, NoMeta), (dim2, NoMeta))._1
+    
+    0 to 100 map { i => result.at(i) } must be (0 to 100 map { i => new URL("http://google.com/search?q=%d" format dataBlock(i)) })
   }
 }
 
