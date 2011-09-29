@@ -14,6 +14,7 @@ class PullTest extends FreeSpec with MustMatchers {
   }
 
   import SF._
+  import SimpleSF._
   "The arr of a function f: {i:Int => i.toString} must be SF[Int, String]" - {
     arr { i: Int => i.toString } must be(anInstanceOf[SF[Int, String]])
   }
