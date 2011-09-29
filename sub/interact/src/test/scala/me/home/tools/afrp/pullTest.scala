@@ -5,7 +5,7 @@ import org.scalatest.matchers.BePropertyMatcher
 import org.scalatest.matchers.BePropertyMatchResult
 import org.scalatest.FreeSpec
 
-object PullTest {
+object SFTest {
   def anInstanceOf[T](implicit manifest: Manifest[T]) = {
     val clazz = manifest.erasure.asInstanceOf[Class[T]]
     new BePropertyMatcher[AnyRef] {
@@ -14,12 +14,14 @@ object PullTest {
   }
 }
 
-class PullTest extends FreeSpec with MustMatchers {
-  import PullTest._
+class SimpleSFTest extends SFTest(SimpleSF)
+
+abstract class SFTest(val ops: SFops) extends FreeSpec with MustMatchers {
+  import SFTest._
   import SF._
-  
-  implicit val sfops = SimpleSF
-  
+
+  implicit val sfops = ops
+
   "The arr of a function f: {i:Int => i.toString} must be SF[Int, String]" - {
     arr { i: Int => i.toString } must be(anInstanceOf[SF[Int, String]])
   }
