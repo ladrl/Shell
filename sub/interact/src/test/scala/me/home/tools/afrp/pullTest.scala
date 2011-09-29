@@ -5,16 +5,21 @@ import org.scalatest.matchers.BePropertyMatcher
 import org.scalatest.matchers.BePropertyMatchResult
 import org.scalatest.FreeSpec
 
-class PullTest extends FreeSpec with MustMatchers {
+object PullTest {
   def anInstanceOf[T](implicit manifest: Manifest[T]) = {
     val clazz = manifest.erasure.asInstanceOf[Class[T]]
     new BePropertyMatcher[AnyRef] {
       def apply(left: AnyRef) = BePropertyMatchResult(clazz.isAssignableFrom(left.getClass), "an instance of " + clazz.getName)
     }
   }
+}
 
+class PullTest extends FreeSpec with MustMatchers {
+  import PullTest._
   import SF._
-  import SimpleSF._
+  
+  implicit val sfops = SimpleSF
+  
   "The arr of a function f: {i:Int => i.toString} must be SF[Int, String]" - {
     arr { i: Int => i.toString } must be(anInstanceOf[SF[Int, String]])
   }
@@ -42,7 +47,7 @@ class PullTest extends FreeSpec with MustMatchers {
 
   "The >>> of two sf's must" - {
     "sequence the operations of two sf's (both mutable and immutable)" - {
-      val sf = arr { i: Int => i.toString } >>> arr { s: String => s + s } // Signal function level
+      val sf = arr { i: Int => i.toString } >>> arr { s: String => s + s } // Signal function level
 
       // Immutable
       val s = sf(`return`(10)) // Signal level
@@ -94,8 +99,8 @@ class PullTest extends FreeSpec with MustMatchers {
       "with a return of val" - {
         sf must be(anInstanceOf[SF[Int, Int]])
         val s = sf(`return`(10))
-        s() must be (10)
-        s() must be (11)
+        s() must be(10)
+        s() must be(11)
       }
 
       var a = 10
@@ -108,7 +113,7 @@ class PullTest extends FreeSpec with MustMatchers {
         s() must be(4)
       }
       "which keeps its state when a new signal is created" - {
-        sf(`return`(a))() must be(5) 
+        sf(`return`(a))() must be(5)
       }
     }
   }
