@@ -91,4 +91,26 @@ class pushTest extends FreeSpec with MustMatchers {
       a must be("1221")
     }
   }
+  
+  "The &&& of two ef's" - {
+    "must dispatch an event through two ef's" - {
+      val ef1 = arr { i: Int => i.toString }
+      val ef2 = arr { i: Int => i.toDouble }
+      
+      val ef = ef1 &&& ef2
+      
+      var a: String = ""
+      var b: Double = 0
+      val e = ef(accept { t => a = t._1; b = t._2})
+      
+      e(10)
+      a must be ("10")
+      b must be (10.0)
+      
+      e(100)
+      a must be ("100")
+      b must be (100.0)
+      
+    }
+  }
 }

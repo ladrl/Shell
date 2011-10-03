@@ -5,6 +5,7 @@ trait EFops {
   def arr[A, B](f: (A) => B): EF[A, B]
   def first[A, B, C](ef: EF[A, B]): EF[(A, C), (B, C)]
   def >>>[A, B, C](ef1: EF[A, B], ef2: EF[B, C]): EF[A, C]
+  def &&&[A, B, C](ef1: EF[A, B], ef2: EF[A, C]): EF[A, (B, C)]
 }
 
 trait E[A] extends Function1[A, Unit]
@@ -17,6 +18,7 @@ object EF {
 
 trait EF[A, B] extends Function1[E[B], E[A]] {
   def >>>[C](ef: EF[B, C])(implicit ops: EFops): EF[A, C] = ops.>>>(this, ef)
+  def &&&[C](ef: EF[A, C])(implicit ops: EFops): EF[A, (B, C)] = ops.&&&(this, ef)
 }
 
 object SimpleEF extends EFops {
@@ -27,13 +29,13 @@ object SimpleEF extends EFops {
   }
   def arr[A, B](f: (A) => B): EF[A, B] = {
     new EF[A, B] {
-      def apply(b: E[B]): E[A] = accept { a: A => b(f(a)) } 
+      def apply(b: E[B]): E[A] = accept { a: A => b(f(a)) }
     }
   }
   def first[A, B, C](ef: EF[A, B]): EF[(A, C), (B, C)] = {
-     new EF[(A, C), (B, C)] {
+    new EF[(A, C), (B, C)] {
       def apply(bc: E[(B, C)]): E[(A, C)] = accept { t: (A, C) =>
-        val ea: E[A] = ef( accept { b: B => bc{ (b, t._2) } } )
+        val ea: E[A] = ef(accept { b: B => bc { (b, t._2) } })
         ea(t._1)
       }
     }
@@ -41,6 +43,17 @@ object SimpleEF extends EFops {
   def >>>[A, B, C](ef1: EF[A, B], ef2: EF[B, C]): EF[A, C] = {
     new EF[A, C] {
       def apply(c: E[C]): E[A] = ef1(ef2(c))
+    }
+  }
+  def &&&[A, B, C](ef1: EF[A, B], ef2: EF[A, C]): EF[A, (B, C)] = {
+    new EF[A, (B, C)] {
+      def apply(bc: E[(B, C)]) = accept { a: A =>
+        ef1(accept { b: B =>
+          ef2(accept { c: C =>
+            bc((b, c))
+          })(a)
+        })(a)
+      }
     }
   }
 }
