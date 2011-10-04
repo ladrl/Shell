@@ -61,6 +61,7 @@ class pushTest extends FreeSpec with MustMatchers {
       b must be (10)
     }
   }
+  
   "The arr of a function" - {
     "must update a var with a transformed value" - {
       val ef = arr { i: Int => i.toString }
@@ -110,7 +111,22 @@ class pushTest extends FreeSpec with MustMatchers {
       e(100)
       a must be ("100")
       b must be (100.0)
+    }
+  }
+  
+  "The loop of a suitable ef" - {
+    "must be a stateful ef" - {
+      val ef = arr { (i: Int, d: Double) => ((i + d).toString, d + i) }
+      val efL = ef.loop(0.0)
       
+      var a = ""
+      val e = efL(accept { a = (_:String)})
+      e(10)
+      a must be ("10.0")
+      e(0)
+      a must be ("10.0")
+      e(-10)
+      a must be ("0.0")
     }
   }
 }
