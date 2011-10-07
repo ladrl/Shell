@@ -1,4 +1,4 @@
-package me.home.tools.afrps
+package me.home.tools.afrp
 
 import org.scalatest.FreeSpec
 import org.scalatest.matchers.MustMatchers

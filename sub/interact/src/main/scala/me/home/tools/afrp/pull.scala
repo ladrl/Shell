@@ -1,4 +1,4 @@
-package me.home.tools.afrps
+package me.home.tools.afrp
 
 trait SFops {
   def `return`[A](a: => A): S[A]

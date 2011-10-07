@@ -1,4 +1,4 @@
-package me.home.tools.afrps
+package me.home.tools.afrp
 
 trait EFops {
   def accept[A](f: (A) => Unit): E[A]

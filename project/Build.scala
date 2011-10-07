@@ -44,6 +44,9 @@ object Dependencies {
   val scalatest	= "org.scalatest" % "scalatest_2.9.0" % "1.6.1" % "test"
   val scalaz    = "org.scalaz" % "scalaz-core_2.9.0-1" % "6.0" % "compile" withSources
   val junit     = "junit" % "junit" % "4.5" % "test"
+  val akka      ="se.scalablesolutions.akka" % "akka-actor" % "1.2"
+  
+  val akkaRepo  = "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases"
   
   val test = Seq(
     scalatest,
@@ -69,6 +72,6 @@ object ShellBuild extends Build {
   lazy val interact = Project(
     "interact",
     file("sub/interact"),
-    settings = Defaults.defaultSettings ++ buildSettings
+    settings = Defaults.defaultSettings ++ buildSettings ++ Seq(resolvers += akkaRepo) ++ Seq(libraryDependencies += akka) ++ Seq(libraryDependencies ++= test)
   )
 }

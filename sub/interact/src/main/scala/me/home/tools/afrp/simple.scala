@@ -1,4 +1,4 @@
-package me.home.tools.afrps
+package me.home.tools.afrp
 
 object SimpleSF extends SFops {
   def `return`[A](a: => A): S[A] = new S[A] {
