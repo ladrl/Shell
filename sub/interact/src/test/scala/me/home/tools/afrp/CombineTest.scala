@@ -33,11 +33,10 @@ class CombineTest extends FreeSpec with MustMatchers {
     val signal = SF.`return` { b }
     "must sample a signal upon an event and send out an update event" - {
       val p = new Poll(trigger_e, signal)
-      val e:E[Any] = p
       
       a must be (0)
       b = 1101
-      e(())
+      p.event(())
       a must be (1101)
     }
   }
@@ -49,12 +48,14 @@ class CombineTest extends FreeSpec with MustMatchers {
     val signal = SF.`return` { b }
     "must sample a signal and stamp it with the value of the trigger event" - {
       val p = new PollStamped(trigger_e, signal)
-      val e:E[String] = p
       
       a must be ((0, ""))
       b = 1234
-      e("stamp")
+      p.event("stamp")
       a must be ((1234, "stamp"))
+      b = 4321
+      p.event("stamp again")
+      a must be ((4321, "stamp again"))
     }
   }
 }
