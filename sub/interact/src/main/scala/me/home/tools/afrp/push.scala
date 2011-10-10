@@ -7,7 +7,7 @@ trait EFops {
   def first[A, B, C](ef: EF[A, B]): EF[(A, C), (B, C)]
   def >>>[A, B, C](ef1: EF[A, B], ef2: EF[B, C]): EF[A, C]
   def &&&[A, B, C](ef1: EF[A, B], ef2: EF[A, C]): EF[A, (B, C)]
-  def loop[A, B, C](ef: EF2[A, B, C], c_init: C): EF[A, B]
+  def loop[A, B, C](ef: EF2[A, B, C], c_init: C): EFLoop[A, B, C]
 }
 
 trait E[A] extends Function1[A, Unit]
@@ -25,5 +25,9 @@ trait EF[A, B] extends Function1[E[B], E[A]] {
 }
 
 trait EF2[A, B, C] extends EF[(A, C), (B, C)] {
-  def loop(c_init: C)(implicit ops: EFops): EF[A, B] = ops.loop(this, c_init)
+  def loop(c_init: C)(implicit ops: EFops): EFLoop[A, B, C] = ops.loop(this, c_init)
+}
+
+trait EFLoop[A, B, C] extends EF[A, B] {
+  val state: S[C]
 }

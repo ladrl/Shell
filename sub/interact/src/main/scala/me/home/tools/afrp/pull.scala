@@ -7,7 +7,7 @@ trait SFops {
   def first[A, B, C](sf: SF[A, B]): SF2[A, B, C]
   def >>>[A, B, C](sf1: SF[A, B], sf2: SF[B, C]): SF[A, C]
   def &&&[A, B, C](sf1: SF[A, B], sf2: SF[A, C]): SF[A, (B, C)]
-  def loop[A, B, C](sf2: SF[(A, C), (B, C)], c_init: C): SF[A, B]
+  def loop[A, B, C](sf2: SF[(A, C), (B, C)], c_init: C): SFLoop[A, B, C]
 }
 
 trait S[A] extends Function0[A]
@@ -25,5 +25,10 @@ trait SF[A, B] extends Function1[S[A], S[B]] {
 }
 
 trait SF2[A, B, C] extends SF[(A, C), (B, C)] {
-  def loop(c_init: C)(implicit ops: SFops): SF[A, B] = ops.loop(this, c_init)
+  // TODO: Add a signal to a looped sf giving access to its state (ef too)
+  def loop(c_init: C)(implicit ops: SFops): SFLoop[A, B, C] = ops.loop(this, c_init)
+}
+
+trait SFLoop[A, B, C] extends SF[A, B] {
+  val state: S[C]
 }
