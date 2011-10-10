@@ -1,23 +1,13 @@
 package me.home.tools.afrp
 
 import org.scalatest.matchers.MustMatchers
-import org.scalatest.matchers.BePropertyMatcher
-import org.scalatest.matchers.BePropertyMatchResult
 import org.scalatest.FreeSpec
 
-object SFTest {
-  def anInstanceOf[T](implicit manifest: Manifest[T]) = {
-    val clazz = manifest.erasure.asInstanceOf[Class[T]]
-    new BePropertyMatcher[AnyRef] {
-      def apply(left: AnyRef) = BePropertyMatchResult(clazz.isAssignableFrom(left.getClass), "an instance of " + clazz.getName)
-    }
-  }
-}
+import me.home.tools.testUtil._
 
 class SimpleSFTest extends SFTest(SimpleSF)
 
 abstract class SFTest(val ops: SFops) extends FreeSpec with MustMatchers {
-  import SFTest._
   import SF._
 
   implicit val sfops = ops
@@ -49,10 +39,10 @@ abstract class SFTest(val ops: SFops) extends FreeSpec with MustMatchers {
 
   "The >>> of two sf's must" - {
     "sequence the operations of two sf's (both mutable and immutable)" - {
-      val sf = arr { i: Int => i.toString } >>> arr { s: String => s + s } // Signal function level
+      val sf = arr { i: Int => i.toString } >>> arr { s: String => s + s }
 
       // Immutable
-      val s = sf(`return`(10)) // Signal level
+      val s = sf(`return`(10))
       s() must be("1010")
 
       // Mutable
@@ -117,6 +107,58 @@ abstract class SFTest(val ops: SFops) extends FreeSpec with MustMatchers {
       "which keeps its state when a new signal is created" - {
         sf(`return`(a))() must be(5)
       }
+      
+      "giving access to its state via a signal" - {
+        val s = sf(`return`(0))
+        sf.state() must be (6)
+        s() must be (6)
+        sf.state() must be (7)
+        sf.state() must be (7)
+      }
     }
+  }
+}
+
+class AkkaSFTest extends FreeSpec with MustMatchers {
+  import SF._
+  import AkkaSF._
+  implicit val sfops = SimpleSF
+
+  "The async of a sf must act identical as normal sf" - {
+    "with arr" - {
+      var a = ""
+      val s = `return`(a)
+
+      val sf = arr { (s: String) => s + "test" + s }
+      val async_sf = async(sf)
+
+      val async_s = async_sf(s)
+      val sync_s = sf(s)
+
+      async_s() must be("test")
+      sync_s() must be("test")
+
+      a = "gugus"
+      async_s() must be("gugustestgugus")
+      sync_s() must be("gugustestgugus")
+    }
+    "with >>> of arr's" - {
+      var a = 0
+      val s = `return`(a)
+
+      val sf1 = arr { (i: Int) => i.toString }
+      val sf2 = arr { (s: String) => "Sampled %s" format s }
+
+      val sf = sf1 >>> sf2
+      val async_sf = async(sf1) >>> async(sf2)
+
+      val sync_s = sf(s)
+      val async_s = async_sf(s)
+
+      sync_s() must be("Sampled 0")
+      async_s() must be("Sampled 0")
+    }
+  }
+  "The async of an sf must use more than one process" - {
   }
 }

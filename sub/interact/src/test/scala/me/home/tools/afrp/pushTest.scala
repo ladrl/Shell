@@ -130,3 +130,33 @@ class pushTest extends FreeSpec with MustMatchers {
     }
   }
 }
+
+class AkkaEFTest extends FreeSpec with MustMatchers {
+  import EF._
+  import AkkaEF._
+  implicit val efops = SimpleEF
+  
+  "The async of an ef must act identical as a normal ef (eventually)" - {
+    "with arr" - {
+      var a = ""
+      val ea = accept { a = (_:String) }
+      
+      var b = ""
+      val eb = accept { b = (_:String) } 
+      
+      val ef = arr { i:Int => i.toString }
+      
+      val e = ef(eb)
+      
+      e(10)
+      b must be ("10")
+      
+      val async_ef = async(ef)
+      val async_e = async_ef(ea)
+      
+      async_e(10)
+      Thread.sleep(10)
+      a must be ("10")
+    }
+  }
+}
