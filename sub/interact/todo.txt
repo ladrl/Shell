@@ -1,0 +1,8 @@
+Add a command output concept:
+==> Output is organized as events
+	trait Output 
+	trait Line extends Output
+	trait Query(val e) extends Output
+	
+Add a command argument concept on the base of signals: 
+Grouping selections in variables (=> Signals) which are passed to the command
