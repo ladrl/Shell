@@ -9,10 +9,11 @@ class SampleAndHold[A](implicit ef_ops: EFops, sf_ops: SFops) {
   val signal = `return` { sample }(sf_ops)
 }
 
-class Poll[A](val e: E[A], s: S[A])(implicit ef_ops: EFops, sf_ops: SFops) {
-  val event = accept[Any] { _ => e(s()) }
-}
 
-class PollStamped[A, B](val e: E[(A, B)], s: S[A])(implicit ef_ops: EFops, sf_ops: SFops) {
-  val event = accept { (b:B) => e((s(), b)) }
+object Poll {
+  def apply[A](e: E[A])(s: S[A])(implicit ef_ops: EFops, sf_ops: SFops) = 
+    accept[Any] { _ => e(s()) }
+  
+  def stamped[A, B](e: E[(A, B)])(s: S[A])(implicit ef_ops: EFops, sf_ops: SFops) = 
+    accept { (b:B) => e((s(), b)) }
 }

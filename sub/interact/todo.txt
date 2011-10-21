@@ -6,3 +6,7 @@ Add a command output concept:
 	
 Add a command argument concept on the base of signals: 
 Grouping selections in variables (=> Signals) which are passed to the command
+
+
+
+ Add a library of ef's/sf's

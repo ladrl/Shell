@@ -45,7 +45,7 @@ object Dependencies {
   val scalaz    = "org.scalaz" % "scalaz-core_2.9.0-1" % "6.0" % "compile" withSources
   val junit     = "junit" % "junit" % "4.5" % "test"
   val akka      ="se.scalablesolutions.akka" % "akka-actor" % "1.2"
-  
+  val scalaSwing = "org.scala-lang" % "scala-swing" % "2.9.0-1" 
   val akkaRepo  = "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases"
   
   val test = Seq(
@@ -53,25 +53,54 @@ object Dependencies {
     junit
   )
   
-  val common = Seq {
-    scalaz
-  }
+  val common = Seq(
+    scalaz,
+    akka,
+    scalaSwing
+  )
 }
 
 object ShellBuild extends Build {
   import BuildSettings._
   import Dependencies._
-  
-  
-  
+
+  class GrowlListener extends sbt.TestsListener {
+    def growl(message: String) = {
+      "growlnotify -m %s" format message !
+    }
+    override def doComplete(finalResult: TestResult.Value) {
+      finalResult match {
+      case TestResult.Passed => growl("Tests passed")
+      case TestResult.Failed => growl("Tests failed!")
+      case TestResult.Error => growl("Test error!!")
+    }
+    }
+    override def doInit {
+      
+    }
+    override def endGroup(name: String, result: TestResult.Value) {
+      
+    }
+    override def endGroup(name: String, t: Throwable) {
+      
+    }
+    override def startGroup(name: String) {
+    }
+    override def testEvent(event: TestEvent) {
+      
+    }
+  }
+  val notifyTest = new GrowlListener
+    
   lazy val resource = Project(
     "resource", 
     file("sub/resource"),
-    settings = Defaults.defaultSettings ++ buildSettings ++ Seq(libraryDependencies := test ++ common )
+    settings = Defaults.defaultSettings ++ buildSettings ++ Seq(libraryDependencies := test ++ common)
   )
   lazy val interact = Project(
     "interact",
     file("sub/interact"),
-    settings = Defaults.defaultSettings ++ buildSettings ++ Seq(resolvers += akkaRepo) ++ Seq(libraryDependencies += akka) ++ Seq(libraryDependencies ++= test)
+    settings = Defaults.defaultSettings ++ buildSettings ++ Seq(resolvers += akkaRepo) ++ Seq(libraryDependencies ++= common ++ test) ++ 
+              Seq(testListeners += notifyTest)
   )
 }

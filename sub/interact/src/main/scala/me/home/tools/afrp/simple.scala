@@ -13,7 +13,7 @@ object SimpleSF extends SFops {
     }
   def first[A, B, C](sf: SF[A, B]): SF2[A, B, C] =
     new SF2[A, B, C] {
-      def apply(s: S[(A, C)]) = `return`{ val sample = s(); (sf(`return`(sample._1))(), sample._2) }
+      def apply(s: S[(A, C)]) = `return` { val sample = s(); (sf(`return`(sample._1))(), sample._2) }
     }
 
   def >>>[A, B, C](sf1: SF[A, B], sf2: SF[B, C]): SF[A, C] =
@@ -44,6 +44,10 @@ object SimpleEF extends EFops {
   def arr[A, B](f: (A) => B): EF[A, B] =
     new EF[A, B] {
       def apply(b: E[B]): E[A] = accept { a: A => b(f(a)) }
+    }
+  def arr[A, B](f: E[B] => E[A])(implicit mf: Manifest[B]) =
+    new EF[A, B] {
+      def apply(eb: E[B]) = f(eb)
     }
   def arr[A, B, C](f: (A, C) => (B, C)): EF2[A, B, C] =
     new EF2[A, B, C] {
