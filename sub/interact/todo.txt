@@ -10,3 +10,5 @@ Grouping selections in variables (=> Signals) which are passed to the command
 
 
  Add a library of ef's/sf's
+ Add a list as a history to the Console
+ 2D Overlay component for displaying state (like groups of resources and associations) 

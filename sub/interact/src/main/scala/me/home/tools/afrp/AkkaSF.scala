@@ -25,7 +25,6 @@ import akka.actor._
 
 
 object AkkaEF {
-  
   case class Event[A](val a: A)(implicit val mf: Manifest[A])
   
   def async[A, B](ef: EF[A, B])(implicit mfa: Manifest[A], mfb: Manifest[B]): EF[A, B] = new EF[A, B] {

@@ -65,14 +65,14 @@ object ShellBuild extends Build {
   import Dependencies._
 
   class GrowlListener extends sbt.TestsListener {
-    def growl(message: String) = {
-      "growlnotify -m %s" format message !
+    def growl(message: String, title: String = "") = {
+      ("echo %s" format message) #> ("growlnotify %s" format title) !
     }
     override def doComplete(finalResult: TestResult.Value) {
       finalResult match {
-      case TestResult.Passed => growl("Tests passed")
-      case TestResult.Failed => growl("Tests failed!")
-      case TestResult.Error => growl("Test error!!")
+      case TestResult.Passed => growl("Tests passed", "Tests complete")
+      case TestResult.Failed => growl("Tests failed!", "Tests complete")
+      case TestResult.Error => growl("Test error!!", "Tests complete")
     }
     }
     override def doInit {
