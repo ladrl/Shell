@@ -7,9 +7,12 @@ object SimpleSF extends SFops {
   def arr[A, B](f: A => B) = new SF[A, B] {
     def apply(s: S[A]) = `return`(f(s()))
   }
-  def arr[A, B, C](f: Tuple2[A, C] => Tuple2[B, C]) =
+  def arr[A, B, C](f: (A, C) => Tuple2[B, C]) =
     new SF2[A, B, C] {
-      def apply(s: S[(A, C)]) = `return`(f(s()))
+      def apply(s: S[(A, C)]) = `return`{
+        val t = s()
+        f(t._1, t._2)
+      }
     }
   def first[A, B, C](sf: SF[A, B]): SF2[A, B, C] =
     new SF2[A, B, C] {

@@ -81,7 +81,7 @@ abstract class SFTest(val ops: SFops) extends FreeSpec with MustMatchers {
   }
 
   "loop must" - {
-    val sf2 = arr { t: (Int, Int) => (t._1 + t._2, t._2 + 1) }
+    val sf2 = arr { (i: Int, j: Int) => (i + j, j + 1) }
     "create a SF[A, B] from a SF2[A, B, C] and a C" - {
       val sf = sf2.loop(0)
       sf must be(anInstanceOf[SF[Int, Int]])

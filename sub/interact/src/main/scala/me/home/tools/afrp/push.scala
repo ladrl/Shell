@@ -19,6 +19,7 @@ object EF {
   def arr[A, B](f: E[B] => E[A])(implicit ops: EFops, mf: Manifest[B]): EF[A, B] = ops.arr(f)
   def arr[A, B, C](f: (A, C) => (B, C))(implicit ops: EFops): EF2[A, B, C] = ops.arr(f)
   def first[A, B, C](ef: EF[A, B])(implicit ops: EFops): EF[(A, C), (B, C)] = ops.first(ef)
+  implicit val ef = SimpleEF
 }
 
 trait EF[A, B] extends Function1[E[B], E[A]] {
