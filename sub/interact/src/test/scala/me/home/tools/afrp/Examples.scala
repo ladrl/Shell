@@ -85,10 +85,23 @@ class Examples extends FlatSpec with MustMatchers {
 	  (updates zip (0 to 10 map { _ * 5 }) ) map { t => t._1(t._2) } 
 	  
 	  (0 to 10) map { _ => s() } must be (0 to 50 by 5)
-	  
-    
   }
 
+  "Signal sources of sub types" must "allow sampling as super type" in {
+    abstract class Super(val value: Int)
+    case class Sub1() extends Super(1)
+    case class Sub2() extends Super(2)
+    
+    val data:List[Super] = Sub1() :: Sub2() :: Nil
+    val ss = data.map { d => SF.`return`{ d }(SF.sf) }
+    val ss_iter = ss.toIterator
+    val s:S[Super] = SF.`return`{ if(ss_iter.hasNext) ss_iter.next.apply() else sys.error("") }(SF.sf)
+    
+    
+    s() must be (Sub1())
+    s() must be (Sub2())
+  }
+  
   "An event sink for a super type" must "allow passing in all subtypes" in {
     abstract class Super(val value: Int)
     case class Sub1() extends Super(1)
