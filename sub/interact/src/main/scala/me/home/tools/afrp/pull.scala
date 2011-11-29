@@ -13,20 +13,21 @@ trait SFops {
 trait S[A] extends Function0[A]
 
 object SF {
-  def `return`[A](a: => A)(implicit ops: SFops): S[A] = ops.`return`(a)
-  def arr[A, B](f: A => B)(implicit ops: SFops): SF[A, B] = ops.arr(f)
-  def arr[A, B, C](f: (A, C) => (B, C))(implicit ops: SFops): SF2[A, B, C] = ops.arr(f)
-  def first[A, B, C](sf: SF[A, B])(implicit ops: SFops): SF2[A, B, C] = ops.first(sf)
-  implicit val sf = SimpleSF
+  val ops = SimpleSF
+  def `return`[A](a: => A): S[A] = ops.`return`(a)
+  def arr[A, B](f: A => B): SF[A, B] = ops.arr(f)
+  def arr[A, B, C](f: (A, C) => (B, C)): SF2[A, B, C] = ops.arr(f)
+  def first[A, B, C](sf: SF[A, B]): SF2[A, B, C] = ops.first(sf)
  }
 
 trait SF[A, B] extends Function1[S[A], S[B]] {
-  def >>>[C](sf: SF[B, C])(implicit ops: SFops): SF[A, C] = ops.>>>(this, sf)
-  def &&&[C](sf: SF[A, C])(implicit ops: SFops): SF[A, (B, C)] = ops.&&&(this, sf)
+  val ops = SimpleSF
+  def >>>[C](sf: SF[B, C]): SF[A, C] = ops.>>>(this, sf)
+  def &&&[C](sf: SF[A, C]): SF[A, (B, C)] = ops.&&&(this, sf)
 }
 
 trait SF2[A, B, C] extends SF[(A, C), (B, C)] {
-  def loop(c_init: C)(implicit ops: SFops): SFLoop[A, B, C] = ops.loop(this, c_init)
+  def loop(c_init: C): SFLoop[A, B, C] = ops.loop(this, c_init)
 }
 
 trait SFLoop[A, B, C] extends SF[A, B] {

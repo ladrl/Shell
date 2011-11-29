@@ -5,8 +5,8 @@ import SF.`return`
 
 class SampleAndHold[A](implicit ef_ops: EFops, sf_ops: SFops) {
   private var sample: A = _
-  val event = accept { sample = (_: A) }(ef_ops)
-  val signal = `return` { sample }(sf_ops)
+  val event = accept { sample = (_: A) }
+  val signal = `return` { sample }
 }
 
 

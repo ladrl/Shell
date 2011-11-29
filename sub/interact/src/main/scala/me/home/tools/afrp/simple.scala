@@ -82,7 +82,7 @@ object SimpleEF extends EFops {
   def loop[A, B, C](ef: EF2[A, B, C], c_init: C): EFLoop[A, B, C] = {
     new EFLoop[A, B, C] {
       var c = c_init
-      val state = SF.`return`(c)(SimpleSF)
+      val state = SF.`return`(c)
       def apply(eb: E[B]): E[A] = accept { a: A =>
         ef(accept { t: (B, C) => eb(t._1); c = t._2 })((a, c))
       }

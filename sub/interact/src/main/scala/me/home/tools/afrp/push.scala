@@ -14,21 +14,20 @@ trait EFops {
 trait E[-A] extends Function1[A, Unit]
 
 object EF {
-  def accept[A](f: (A) => Unit)(implicit ops: EFops): E[A] = ops.accept(f)
-  def arr[A, B](f: A => B)(implicit ops: EFops): EF[A, B] = ops.arr(f)
-  def arr[A, B](f: E[B] => E[A])(implicit ops: EFops, mf: Manifest[B]): EF[A, B] = ops.arr(f)
-  def arr[A, B, C](f: (A, C) => (B, C))(implicit ops: EFops): EF2[A, B, C] = ops.arr(f)
-  def first[A, B, C](ef: EF[A, B])(implicit ops: EFops): EF[(A, C), (B, C)] = ops.first(ef)
-  implicit val ef = SimpleEF
+  def accept[A](f: (A) => Unit): E[A] = SimpleEF.accept(f)
+  def arr[A, B](f: A => B): EF[A, B] = SimpleEF.arr(f)
+  def arr[A, B](f: E[B] => E[A])(implicit mf: Manifest[B]): EF[A, B] = SimpleEF.arr(f)
+  def arr[A, B, C](f: (A, C) => (B, C)): EF2[A, B, C] = SimpleEF.arr(f)
+  def first[A, B, C](ef: EF[A, B]): EF[(A, C), (B, C)] = SimpleEF.first(ef)
 }
 
 trait EF[A, B] extends Function1[E[B], E[A]] {
-  def >>>[C](ef: EF[B, C])(implicit ops: EFops): EF[A, C] = ops.>>>(this, ef)
-  def &&&[C](ef: EF[A, C])(implicit ops: EFops): EF[A, (B, C)] = ops.&&&(this, ef)
+  def >>>[C](ef: EF[B, C]): EF[A, C] = SimpleEF.>>>(this, ef)
+  def &&&[C](ef: EF[A, C]): EF[A, (B, C)] = SimpleEF.&&&(this, ef)
 }
 
 trait EF2[A, B, C] extends EF[(A, C), (B, C)] {
-  def loop(c_init: C)(implicit ops: EFops): EFLoop[A, B, C] = ops.loop(this, c_init)
+  def loop(c_init: C): EFLoop[A, B, C] = SimpleEF.loop(this, c_init)
 }
 
 trait EFLoop[A, B, C] extends EF[A, B] {

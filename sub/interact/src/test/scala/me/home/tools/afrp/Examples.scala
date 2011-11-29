@@ -8,18 +8,19 @@ import scala.collection.generic.{
 import scala.collection.mutable.{
   ListBuffer
 }
+import scala.util.Random
 
 object Methods {
   import EF._
   val consume = accept { _:Any => }
   def asE[T](lb: Growable[T]): E[T] = accept { lb += _ }
   
-  def store[T](t: T) = arr((newT: T, currentT: T) => (currentT, newT))(EF.ef).loop(t)
+  def store[T](t: T) = arr((newT: T, currentT: T) => (currentT, newT)).loop(t)
   def cycle[T](es: List[E[T]]) = {
     arr((i: T, l: List[E[T]]) => {
       l.take(1).map { _(i) }
       (i, l.tail :+ l.head)
-    })(EF.ef).loop(es)
+    }).loop(es)
   }
  
 
@@ -56,7 +57,7 @@ class Examples extends FlatSpec with MustMatchers {
     val (sw, e) = event_switch(v)
     val e_switch = sw(accept { e: E[Int] => })
 
-    val es = (0 to 10) map { i: Int => j: Int => j + (i * 20) } map { arr(_)(EF.ef)(v) }
+    val es = (0 to 10) map { i: Int => j: Int => j + (i * 20) } map { arr(_)(v) }
 
     for (current <- es) {
       e_switch(current)
@@ -77,7 +78,7 @@ class Examples extends FlatSpec with MustMatchers {
 	  def cycle[T](l: List[S[T]]) = arr((t: T, l: List[S[T]]) => { (l(0)(), l.tail :+ l.head) }).loop(l)
 	  
 	  val cycled:SF[Int, Int] = cycle(signals)
-	  val const = SF.`return` { 0 }(SF.sf)
+	  val const = SF.`return` { 0 }
 	  val s = cycled(const)
 	  
 	  (0 to 10) map { _ => s() } must be (0 to 10)
@@ -93,9 +94,9 @@ class Examples extends FlatSpec with MustMatchers {
     case class Sub2() extends Super(2)
     
     val data:List[Super] = Sub1() :: Sub2() :: Nil
-    val ss = data.map { d => SF.`return`{ d }(SF.sf) }
+    val ss = data.map { d => SF.`return`{ d } }
     val ss_iter = ss.toIterator
-    val s:S[Super] = SF.`return`{ if(ss_iter.hasNext) ss_iter.next.apply() else sys.error("") }(SF.sf)
+    val s:S[Super] = SF.`return`{ if(ss_iter.hasNext) ss_iter.next.apply() else sys.error("") }
     
     
     s() must be (Sub1())
@@ -115,5 +116,50 @@ class Examples extends FlatSpec with MustMatchers {
     e1(Sub1())
     e2(Sub2())
     Var must be(Sub1() :: Sub2() :: Nil)
+  }
+  
+  def createEvents(eventCount: Int, f: Int => Double):List[(Long, Double)] = {
+	  import scala.util.Random
+	  val r = new Random()
+	  val deltas:List[Long] = (0 until eventCount) map { _:Int => scala.math.abs(r.nextLong % 100) } toList
+	  val eventValues = (0 until eventCount) map f
+			  
+	  deltas.zip(eventValues)
+  }
+  
+  "An event with a timestamp" must "be created" in {
+    
+    val eventCount = 100
+
+    val events = createEvents(eventCount, { scala.math.sin(_) })
+    
+    events.length must be (eventCount)
+  }
+  
+  it must "be integrated" in {
+    val events:List[(Long, Double)] = createEvents(100000, { scala.math.sin(_) })
+
+    
+    
+    def accumulate(t: (Long, Double), a: (Long, Double)) = {
+    	val quotient = 10000.0
+    	val ΔT = t._1 / quotient
+    	
+    	(t, (t._1, t._2 * ΔT + a._2))
+    }
+    
+    val integrate = EF.arr(accumulate _).loop((0, 0))
+    
+    val e = integrate(EF.accept{ _ => })
+    
+    events map { e(_) }
+    integrate.state()._2 must be (0.0 plusOrMinus 1.0)
+  }
+  
+  it must "be differentiated" in {
+    
+    // d = Δx/Δt
+    
+    pending
   }
 }

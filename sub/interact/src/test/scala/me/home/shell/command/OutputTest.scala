@@ -6,7 +6,6 @@ import me.home.tools.afrp._
 import scala.collection.mutable.ListBuffer
 
 class OutputTest extends FlatSpec with MustMatchers {
-  implicit val efops = SimpleEF
   import EF._
 /*  "An output" must "respond to queries according to the response list" in {
     val console = new ListBuffer[String]()
